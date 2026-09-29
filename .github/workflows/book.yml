@@ -30,7 +30,7 @@ jobs:
       - name: Run the test suite
         run: python -m pytest tests -q
       - name: Build the book (executes the notebooks)
-        run: jupyter-book build . --warningiserror=false
+        run: jupyter-book build .
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _build/html
