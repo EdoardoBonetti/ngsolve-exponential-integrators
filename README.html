@@ -1,0 +1,656 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Exponential integrators in NGSolve &#8212; Exponential integrators in NGSolve</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'README';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces" href="01_heat_exponential_euler/expint_heat.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Exponential integrators in NGSolve</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="01_heat_exponential_euler/expint_heat.html">Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_matrix_exponential_methods/matrix_functions.html">Exponential integrators in NGSolve — Part 2: computing <span class="math notranslate nohighlight">\(e^{-tA}v\)</span> for a large sparse FE operator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_convection_diffusion_and_sources/convdiff_expRK.html">Exponential integrators in NGSolve — Part 3: non-symmetric operators and time-dependent sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_nonlinear_allen_cahn/allen_cahn_exprb.html">Exponential integrators in NGSolve — Part 4: the nonlinear Allen–Cahn equation</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/README.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Exponential integrators in NGSolve</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running">Running</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-methods-in-one-table">The methods in one table</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfalls-all-encountered-while-writing-this">Pitfalls (all encountered while writing this)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submitting-to-the-ngsolve-i-tutorials">Submitting to the NGSolve i-tutorials</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="exponential-integrators-in-ngsolve">
+<h1>Exponential integrators in NGSolve<a class="headerlink" href="#exponential-integrators-in-ngsolve" title="Link to this heading">#</a></h1>
+<p>A four-part tutorial series on exponential integrators for time-dependent finite element
+problems, written in the style of the NGSolve i-tutorials (section 3, time stepping).
+Everything is pure Python on top of the public NGSolve API — no changes to the C++ core.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Part</p></th>
+<th class="head"><p>Notebook</p></th>
+<th class="head"><p>Content</p></th>
+<th class="head"><p>runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p><a class="reference internal" href="01_heat_exponential_euler/expint_heat.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">01_heat_exponential_euler/expint_heat.ipynb</span></code></span></a></p></td>
+<td><p>Heat equation; exact step <code class="docutils literal notranslate"><span class="pre">u_{n+1}</span> <span class="pre">=</span> <span class="pre">e^{-dt</span> <span class="pre">A}</span> <span class="pre">u_n</span> <span class="pre">+</span> <span class="pre">dt</span> <span class="pre">φ₁(-dt</span> <span class="pre">A)</span> <span class="pre">M⁻¹f</span></code>; Lanczos in the mass-matrix inner product; polynomial vs. <strong>shift-and-invert</strong> Krylov; <code class="docutils literal notranslate"><span class="pre">KrylovExp</span></code> as a <code class="docutils literal notranslate"><span class="pre">BaseMatrix</span></code>; order study IE / CN / exponential Euler; tests</p></td>
+<td><p>~10 s</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p><a class="reference internal" href="02_matrix_exponential_methods/matrix_functions.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">02_matrix_exponential_methods/matrix_functions.ipynb</span></code></span></a></p></td>
+<td><p>How to compute <code class="docutils literal notranslate"><span class="pre">e^{-tA}v</span></code> for a large sparse FE operator: polynomial Lanczos (Hochbruck–Lubich bound, Saad estimate), <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code>, Chebyshev expansion, shift-and-invert Lanczos (choice of γ, inexact solves), <strong>contour integrals</strong> with complex shifts, augmented-matrix trick, timing comparison</p></td>
+<td><p>~20 s</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p><a class="reference internal" href="03_convection_diffusion_and_sources/convdiff_expRK.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">03_convection_diffusion_and_sources/convdiff_expRK.ipynb</span></code></span></a></p></td>
+<td><p>Non-symmetric operators (Arnoldi, Hessenberg matrix, field of values); time-dependent sources: exponential Euler and exponential trapezoidal rule (φ₂), order study</p></td>
+<td><p>~40 s</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p><a class="reference internal" href="04_nonlinear_allen_cahn/allen_cahn_exprb.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">04_nonlinear_allen_cahn/allen_cahn_exprb.ipynb</span></code></span></a></p></td>
+<td><p>Semilinear Allen–Cahn: exponential Euler, exponential Rosenbrock–Euler, IMEX Euler; energy decay, order study, large steps</p></td>
+<td><p>~15 s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Supporting files:</p>
+<ul class="simple">
+<li><p><a class="reference download internal" download="" href="_downloads/43b0110fb963e4ddda43759c3770c08f/expint_tools.py"><span class="xref download myst"><code class="docutils literal notranslate"><span class="pre">expint_tools.py</span></code></span></a> — the shared library: <code class="docutils literal notranslate"><span class="pre">phi</span></code>, <code class="docutils literal notranslate"><span class="pre">krylov_funm</span></code>, <code class="docutils literal notranslate"><span class="pre">KrylovExp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ContourExp</span></code>, <code class="docutils literal notranslate"><span class="pre">chebyshev_exp</span></code>, <code class="docutils literal notranslate"><span class="pre">lanczos_spectral_bound</span></code>, <code class="docutils literal notranslate"><span class="pre">DenseReference</span></code>. Part 1 develops the
+core routines inline; Parts 2–4 import them.</p></li>
+<li><p><a class="reference download internal" download="" href="_downloads/1e700987a4a5662d71efc9f211d3fca3/test_expint.py"><span class="xref download myst"><code class="docutils literal notranslate"><span class="pre">tests/test_expint.py</span></code></span></a> — pytest suite (11 tests, ~3 s) checking every
+method against dense references and the orders of the time stepping schemes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">old/</span></code> — the original exploratory notebooks (kept unchanged for reference; their exponential
+parts contain known bugs that the new notebooks fix).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_toc.yml</span></code>, <code class="docutils literal notranslate"><span class="pre">_config.yml</span></code> — minimal <a class="reference external" href="https://jupyterbook.org">Jupyter Book</a> configuration.</p></li>
+</ul>
+<section id="running">
+<h2>Running<a class="headerlink" href="#running" title="Link to this heading">#</a></h2>
+<p>The notebooks need NGSolve with <code class="docutils literal notranslate"><span class="pre">webgui_jupyter_widgets</span></code>, plus numpy, scipy and matplotlib.
+On this machine NGSolve is the source build installed in <code class="docutils literal notranslate"><span class="pre">/Applications/Netgen.app</span></code>; either
+select the Jupyter kernel <strong>“Python 3 (NGSolve, Netgen.app)”</strong> (registered in
+<code class="docutils literal notranslate"><span class="pre">~/Library/Jupyter/kernels/ngsolve-netgen</span></code>) or set the path by hand:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>/Applications/Netgen.app/Contents/Resources/lib/python3.13/site-packages
+</pre></div>
+</div>
+<p>Headless execution of a notebook (run inside its folder so that <code class="docutils literal notranslate"><span class="pre">expint_tools</span></code> is found):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>01_heat_exponential_euler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>jupyter<span class="w"> </span>nbconvert<span class="w"> </span>--to<span class="w"> </span>notebook<span class="w"> </span>--execute<span class="w"> </span>expint_heat.ipynb<span class="w"> </span>--output<span class="w"> </span>/tmp/out.ipynb
+</pre></div>
+</div>
+<p>Tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-q
+</pre></div>
+</div>
+<p>Jupyter Book:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>jupyter-book<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>jupyter-book<span class="w"> </span>build<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="the-methods-in-one-table">
+<h2>The methods in one table<a class="headerlink" href="#the-methods-in-one-table" title="Link to this heading">#</a></h2>
+<p>For the semi-discrete problem <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">u'</span> <span class="pre">=</span> <span class="pre">-K</span> <span class="pre">u</span> <span class="pre">+</span> <span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">A</span> <span class="pre">=</span> <span class="pre">M⁻¹K</span></code> (self-adjoint in the <code class="docutils literal notranslate"><span class="pre">M</span></code>-inner
+product, spectrum in <code class="docutils literal notranslate"><span class="pre">[λ_min,</span> <span class="pre">λ_max]</span></code>, <code class="docutils literal notranslate"><span class="pre">λ_max</span> <span class="pre">~</span> <span class="pre">h⁻²</span></code>), and a target tolerance <code class="docutils literal notranslate"><span class="pre">ε</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>method</p></th>
+<th class="head"><p>needs</p></th>
+<th class="head"><p>work per application of <code class="docutils literal notranslate"><span class="pre">e^{-dt</span> <span class="pre">A}</span></code></p></th>
+<th class="head"><p>mesh dependent?</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>polynomial Lanczos</p></td>
+<td><p>products with <code class="docutils literal notranslate"><span class="pre">A</span></code> (= one mass solve each)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">≈</span> <span class="pre">√(dt</span> <span class="pre">λ_max)</span> <span class="pre">+</span> <span class="pre">O(log</span> <span class="pre">1/ε)</span></code></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p>truncated Taylor (<code class="docutils literal notranslate"><span class="pre">expm_multiply</span></code>)</p></td>
+<td><p>products with <code class="docutils literal notranslate"><span class="pre">A</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">∝</span> <span class="pre">dt</span> <span class="pre">λ_max</span></code></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-even"><td><p>Chebyshev expansion</p></td>
+<td><p>products with <code class="docutils literal notranslate"><span class="pre">A</span></code>, bound for <code class="docutils literal notranslate"><span class="pre">λ_max</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">≈</span> <span class="pre">dt</span> <span class="pre">λ_max</span> <span class="pre">/</span> <span class="pre">2</span> <span class="pre">+</span> <span class="pre">O(log</span> <span class="pre">1/ε)</span></code></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>shift-and-invert Lanczos</strong>, <code class="docutils literal notranslate"><span class="pre">γ</span> <span class="pre">≈</span> <span class="pre">dt/10</span></code></p></td>
+<td><p>one factorisation of <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">+</span> <span class="pre">γK</span></code></p></td>
+<td><p>10–30 back-substitutions</p></td>
+<td><p><strong>no</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>contour integral</strong> (parabolic, N points)</p></td>
+<td><p>N/2 complex factorisations of <code class="docutils literal notranslate"><span class="pre">z_k</span> <span class="pre">M</span> <span class="pre">+</span> <span class="pre">K</span></code></p></td>
+<td><p>N/2 back-substitutions, parallel</p></td>
+<td><p><strong>no</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">φ_k</span></code> functions come from the same machinery with a different scalar function (Krylov) or, for the
+contour method, from the recursion <code class="docutils literal notranslate"><span class="pre">φ_k(-dtA)</span> <span class="pre">=</span> <span class="pre">-(dtA)⁻¹(φ_{k-1}(-dtA)</span> <span class="pre">-</span> <span class="pre">I/(k-1)!)</span></code>.</p>
+</section>
+<section id="pitfalls-all-encountered-while-writing-this">
+<h2>Pitfalls (all encountered while writing this)<a class="headerlink" href="#pitfalls-all-encountered-while-writing-this" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">ngsolve</span> <span class="pre">import</span> <span class="pre">*</span></code> exports <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">sin</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, <code class="docutils literal notranslate"><span class="pre">z</span></code>: never call a vector <code class="docutils literal notranslate"><span class="pre">y</span></code>;
+use <code class="docutils literal notranslate"><span class="pre">np.exp</span></code> on numpy arrays.</p></li>
+<li><p>numpy scalars (<code class="docutils literal notranslate"><span class="pre">np.float64</span></code>) do not multiply NGSolve vectors — wrap them in <code class="docutils literal notranslate"><span class="pre">float(...)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mat.COO()</span></code> exports only the lower triangle of a form assembled with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>; assemble
+with <code class="docutils literal notranslate"><span class="pre">symmetric=False</span></code> when exporting to scipy.</p></li>
+<li><p>Krylov start vectors must be zero on the Dirichlet dofs (<code class="docutils literal notranslate"><span class="pre">Projector(freedofs,</span> <span class="pre">True)</span></code>), otherwise
+the <code class="docutils literal notranslate"><span class="pre">M</span></code>-inner product couples them to the boundary and the iteration diverges.</p></li>
+<li><p>Evaluate functions of the small projected matrix through its eigendecomposition (or the
+augmented matrix), never through <code class="docutils literal notranslate"><span class="pre">inv(T)</span></code>.</p></li>
+<li><p>Complex shifts require the matrices on a <code class="docutils literal notranslate"><span class="pre">complex=True</span></code> space; use <code class="docutils literal notranslate"><span class="pre">umfpack</span></code> for the solves.</p></li>
+<li><p>A bare <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">*</span> <span class="pre">vec</span></code> is a lazy expression in NGSolve: call <code class="docutils literal notranslate"><span class="pre">.Evaluate()</span></code> (or assign to <code class="docutils literal notranslate"><span class="pre">.data</span></code>)
+before reading <code class="docutils literal notranslate"><span class="pre">E.info</span></code>.</p></li>
+<li><p>The right-hand side of an inner CG solve must be projected onto the free dofs.</p></li>
+</ul>
+</section>
+<section id="submitting-to-the-ngsolve-i-tutorials">
+<h2>Submitting to the NGSolve i-tutorials<a class="headerlink" href="#submitting-to-the-ngsolve-i-tutorials" title="Link to this heading">#</a></h2>
+<p>The notebooks follow the conventions of <code class="docutils literal notranslate"><span class="pre">docs/i-tutorials/unit-3.1-parabolic/parabolic.ipynb</span></code>
+(<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">ngsolve</span> <span class="pre">import</span> <span class="pre">*</span></code>, <code class="docutils literal notranslate"><span class="pre">webgui</span></code> <code class="docutils literal notranslate"><span class="pre">Draw</span></code>, <code class="docutils literal notranslate"><span class="pre">mstar.AsVector()</span></code> linear combinations, multidim
+animation). To add Part 1 as unit 3.9: copy <code class="docutils literal notranslate"><span class="pre">expint_heat.ipynb</span></code> and <code class="docutils literal notranslate"><span class="pre">expint_tools.py</span></code> to
+<code class="docutils literal notranslate"><span class="pre">docs/i-tutorials/unit-3.9-expint/</span></code>, and add
+<code class="docutils literal notranslate"><span class="pre">*</span> <span class="pre">[3.9](unit-3.9-expint/expint_heat.ipynb)</span> <span class="pre">Exponential</span> <span class="pre">integrators</span> <span class="pre">via</span> <span class="pre">Krylov</span> <span class="pre">methods</span></code> to
+<code class="docutils literal notranslate"><span class="pre">docs/i-tutorials/index.ipynb</span></code> and <code class="docutils literal notranslate"><span class="pre">unit-3.9-expint/expint_heat.ipynb</span></code> to <code class="docutils literal notranslate"><span class="pre">index.rst</span></code>.
+<code class="docutils literal notranslate"><span class="pre">nbsphinx</span></code> executes the notebooks at build time with <code class="docutils literal notranslate"><span class="pre">allow_errors</span> <span class="pre">=</span> <span class="pre">False</span></code>, so the assertions in
+the test cells act as CI.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Y. Saad, <em>Analysis of some Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 29 (1992). doi:10.1137/0729014</p></li>
+<li><p>M. Hochbruck, C. Lubich, <em>On Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 34 (1997). doi:10.1137/S0036142995280572</p></li>
+<li><p>J. van den Eshof, M. Hochbruck, <em>Preconditioning Lanczos approximations to the matrix exponential</em>, SIAM J. Sci. Comput. 27 (2006). doi:10.1137/040605461</p></li>
+<li><p>I. Moret, P. Novati, <em>RD-rational approximations of the matrix exponential</em>, BIT 44 (2004). doi:10.1023/B:BITN.0000046805.27551.3b</p></li>
+<li><p>M. Hochbruck, A. Ostermann, <em>Exponential integrators</em>, Acta Numerica 19 (2010). doi:10.1017/S0962492910000048</p></li>
+<li><p>M. Hochbruck, A. Ostermann, J. Schweitzer, <em>Exponential Rosenbrock-type methods</em>, SIAM J. Numer. Anal. 47 (2009). doi:10.1137/080717717</p></li>
+<li><p>A. H. Al-Mohy, N. J. Higham, <em>Computing the action of the matrix exponential</em>, SIAM J. Sci. Comput. 33 (2011). doi:10.1137/100788860</p></li>
+<li><p>L. N. Trefethen, J. A. C. Weideman, T. Schmelzer, <em>Talbot quadratures and rational approximations</em>, BIT 46 (2006). doi:10.1007/s10543-006-0077-9</p></li>
+<li><p>J. A. C. Weideman, L. N. Trefethen, <em>Parabolic and hyperbolic contours for computing the Bromwich integral</em>, Math. Comp. 76 (2007). doi:10.1090/S0025-5718-07-01945-X</p></li>
+<li><p>S. Güttel, <em>Rational Krylov approximation of matrix functions</em>, GAMM-Mitt. 36 (2013). doi:10.1002/gamm.201310002</p></li>
+<li><p>S. Gaudreault, G. Rainwater, M. Tokman, <em>KIOPS: A fast adaptive Krylov subspace solver for exponential integrators</em>, J. Comput. Phys. 372 (2018). doi:10.1016/j.jcp.2018.06.026</p></li>
+</ul>
+</section>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="right-next"
+       href="01_heat_exponential_euler/expint_heat.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running">Running</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-methods-in-one-table">The methods in one table</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pitfalls-all-encountered-while-writing-this">Pitfalls (all encountered while writing this)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submitting-to-the-ngsolve-i-tutorials">Submitting to the NGSolve i-tutorials</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Edoardo Bonetti
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1057 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Exponential integrators in NGSolve — Part 2: computing \(e^{-tA}v\) for a large sparse FE operator &#8212; Exponential integrators in NGSolve</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=55c26ed414f5f8a31ebb" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=55c26ed414f5f8a31ebb"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '02_matrix_exponential_methods/matrix_functions';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Exponential integrators in NGSolve — Part 3: non-symmetric operators and time-dependent sources" href="../03_convection_diffusion_and_sources/convdiff_expRK.html" />
+    <link rel="prev" title="Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces" href="../01_heat_exponential_euler/expint_heat.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../README.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Exponential integrators in NGSolve</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../01_heat_exponential_euler/expint_heat.html">Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Exponential integrators in NGSolve — Part 2: computing <span class="math notranslate nohighlight">\(e^{-tA}v\)</span> for a large sparse FE operator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../03_convection_diffusion_and_sources/convdiff_expRK.html">Exponential integrators in NGSolve — Part 3: non-symmetric operators and time-dependent sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../04_nonlinear_allen_cahn/allen_cahn_exprb.html">Exponential integrators in NGSolve — Part 4: the nonlinear Allen–Cahn equation</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/02_matrix_exponential_methods/matrix_functions.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Exponential integrators in NGSolve — Part 2: computing e^{-tA}v for a large sparse FE operator</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-the-heat-equation-on-two-meshes">Setup: the heat equation on two meshes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#polynomial-lanczos">1. Polynomial Lanczos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-estimation">Error estimation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#truncated-taylor-series-scipy-sparse-linalg-expm-multiply">2. Truncated Taylor series: <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chebyshev-expansion">3. Chebyshev expansion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shift-and-invert-lanczos">4. Shift-and-invert Lanczos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inexact-inner-solves">Inexact inner solves</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals-rational-approximation-with-complex-shifts">5. Contour integrals (rational approximation with complex shifts)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick-for-varphi-functions">6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-on-the-fine-mesh">7. Comparison on the fine mesh</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="exponential-integrators-in-ngsolve-part-2-computing-e-ta-v-for-a-large-sparse-fe-operator">
+<h1>Exponential integrators in NGSolve — Part 2: computing <span class="math notranslate nohighlight">\(e^{-tA}v\)</span> for a large sparse FE operator<a class="headerlink" href="#exponential-integrators-in-ngsolve-part-2-computing-e-ta-v-for-a-large-sparse-fe-operator" title="Link to this heading">#</a></h1>
+<p>Part 1 introduced exponential Euler and used shift-and-invert Lanczos to apply <span class="math notranslate nohighlight">\(e^{-\Delta t A}\)</span>, <span class="math notranslate nohighlight">\(A = M^{-1}K\)</span>. This notebook is a survey of the practical alternatives and of their cost, always for the finite element setting where</p>
+<ul class="simple">
+<li><p>a product with <span class="math notranslate nohighlight">\(A\)</span> costs one product with <span class="math notranslate nohighlight">\(K\)</span> <strong>plus one solve with the mass matrix</strong> <span class="math notranslate nohighlight">\(M\)</span>,</p></li>
+<li><p>a solve with <span class="math notranslate nohighlight">\((I + \gamma A) = M^{-1}(M + \gamma K)\)</span> costs one sparse back-substitution with a factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span> (the implicit Euler matrix),</p></li>
+<li><p>a solve with <span class="math notranslate nohighlight">\((zI + A)\)</span> for complex <span class="math notranslate nohighlight">\(z\)</span> costs one <em>complex</em> back-substitution.</p></li>
+</ul>
+<p>We compare</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>method</p></th>
+<th class="head"><p>what it needs</p></th>
+<th class="head"><p>iterations for tolerance <span class="math notranslate nohighlight">\(\varepsilon\)</span></p></th>
+<th class="head"><p>mesh dependent?</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>polynomial Lanczos (Saad, Hochbruck–Lubich)</p></td>
+<td><p>products with <span class="math notranslate nohighlight">\(A\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\approx \sqrt{\Delta t\lambda_{\max}} + O(\log 1/\varepsilon)\)</span></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p>truncated Taylor, <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code> (Al-Mohy–Higham)</p></td>
+<td><p>products with <span class="math notranslate nohighlight">\(A\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\propto \Delta t\lambda_{\max}\)</span></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-even"><td><p>Chebyshev expansion (Druskin–Knizhnerman, Bergamaschi–Vianello)</p></td>
+<td><p>products with <span class="math notranslate nohighlight">\(A\)</span> + a bound for <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\approx \Delta t\lambda_{\max}/2 + O(\log 1/\varepsilon)\)</span></p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>shift-and-invert Lanczos</strong> (van den Eshof–Hochbruck)</p></td>
+<td><p>one factorisation of <span class="math notranslate nohighlight">\(M+\gamma K\)</span></p></td>
+<td><p>10–30</p></td>
+<td><p><strong>no</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>contour integral / rational approximation</strong> (Trefethen–Weideman–Schmelzer)</p></td>
+<td><p><span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations of <span class="math notranslate nohighlight">\(z_kM + K\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(N = 16\)</span>–<span class="math notranslate nohighlight">\(32\)</span></p></td>
+<td><p><strong>no</strong></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The helpers of Part 1 (and a few more) are collected in <code class="docutils literal notranslate"><span class="pre">expint_tools.py</span></code> one directory up.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ngsolve</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ngsolve.webgui</span><span class="w"> </span><span class="kn">import</span> <span class="n">Draw</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ngsolve.krylovspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">CGSolver</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span><span class="o">,</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sla</span><span class="o">,</span><span class="w"> </span><span class="nn">scipy.sparse.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">spla</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span> <span class="k">as</span> <span class="n">walltime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">expint_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">phi</span><span class="p">,</span> <span class="n">krylov_funm</span><span class="p">,</span> <span class="n">KrylovExp</span><span class="p">,</span> <span class="n">ContourExp</span><span class="p">,</span> <span class="n">chebyshev_exp</span><span class="p">,</span> <span class="n">lanczos_spectral_bound</span><span class="p">,</span> <span class="n">DenseReference</span>
+<span class="n">ngsglobals</span><span class="o">.</span><span class="n">msg_level</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="setup-the-heat-equation-on-two-meshes">
+<h2>Setup: the heat equation on two meshes<a class="headerlink" href="#setup-the-heat-equation-on-two-meshes" title="Link to this heading">#</a></h2>
+<p>Same model problem as in Part 1 (unit square, Dirichlet everywhere, order 3, rough initial datum). On the coarse mesh the dense generalised eigenproblem gives us the exact <span class="math notranslate nohighlight">\(e^{-tA}v\)</span>; on the fine mesh we use shift-and-invert Lanczos with a very tight tolerance as reference and cross-check it against the contour integral.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">maxh</span><span class="p">):</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">unit_square</span><span class="o">.</span><span class="n">GenerateMesh</span><span class="p">(</span><span class="n">maxh</span><span class="o">=</span><span class="n">maxh</span><span class="p">))</span>
+    <span class="n">fes</span> <span class="o">=</span> <span class="n">H1</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">dirichlet</span><span class="o">=</span><span class="s2">".*"</span><span class="p">)</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">fes</span><span class="o">.</span><span class="n">TnT</span><span class="p">()</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">BilinearForm</span><span class="p">(</span><span class="n">grad</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">grad</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">*</span><span class="n">dx</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">Assemble</span><span class="p">()</span><span class="o">.</span><span class="n">mat</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">BilinearForm</span><span class="p">(</span><span class="n">u</span><span class="o">*</span><span class="n">v</span><span class="o">*</span><span class="n">dx</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">Assemble</span><span class="p">()</span><span class="o">.</span><span class="n">mat</span>
+    <span class="n">fesc</span> <span class="o">=</span> <span class="n">H1</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">dirichlet</span><span class="o">=</span><span class="s2">".*"</span><span class="p">,</span> <span class="nb">complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>               <span class="c1"># for complex shifts</span>
+    <span class="n">uc</span><span class="p">,</span> <span class="n">vc</span> <span class="o">=</span> <span class="n">fesc</span><span class="o">.</span><span class="n">TnT</span><span class="p">()</span>
+    <span class="n">Kc</span> <span class="o">=</span> <span class="n">BilinearForm</span><span class="p">(</span><span class="n">grad</span><span class="p">(</span><span class="n">uc</span><span class="p">)</span><span class="o">*</span><span class="n">grad</span><span class="p">(</span><span class="n">vc</span><span class="p">)</span><span class="o">*</span><span class="n">dx</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">Assemble</span><span class="p">()</span><span class="o">.</span><span class="n">mat</span>
+    <span class="n">Mc</span> <span class="o">=</span> <span class="n">BilinearForm</span><span class="p">(</span><span class="n">uc</span><span class="o">*</span><span class="n">vc</span><span class="o">*</span><span class="n">dx</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">Assemble</span><span class="p">()</span><span class="o">.</span><span class="n">mat</span>
+    <span class="n">gfu</span> <span class="o">=</span> <span class="n">GridFunction</span><span class="p">(</span><span class="n">fes</span><span class="p">)</span>
+    <span class="n">gfu</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="o">*</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">0.3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mf">0.6</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="n">IfPos</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">0.8</span><span class="o">-</span><span class="n">x</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="n">IfPos</span><span class="p">((</span><span class="n">y</span><span class="o">-</span><span class="mf">0.2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">0.5</span><span class="o">-</span><span class="n">y</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">gfu</span><span class="o">.</span><span class="n">vec</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Projector</span><span class="p">(</span><span class="n">fes</span><span class="o">.</span><span class="n">FreeDofs</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span> <span class="o">*</span> <span class="n">gfu</span><span class="o">.</span><span class="n">vec</span>
+    <span class="n">invM</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">Inverse</span><span class="p">(</span><span class="n">fes</span><span class="o">.</span><span class="n">FreeDofs</span><span class="p">(),</span> <span class="n">inverse</span><span class="o">=</span><span class="s2">"sparsecholesky"</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">applyA</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>                                                       <span class="c1"># z -&gt; M^{-1} K z</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">();</span> <span class="n">tmp</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">K</span><span class="o">*</span><span class="n">z</span><span class="p">;</span> <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">invM</span><span class="o">*</span><span class="n">tmp</span><span class="p">;</span> <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="n">mesh</span><span class="p">,</span> <span class="n">fes</span><span class="o">=</span><span class="n">fes</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">Kc</span><span class="o">=</span><span class="n">Kc</span><span class="p">,</span> <span class="n">Mc</span><span class="o">=</span><span class="n">Mc</span><span class="p">,</span> <span class="n">freedofs</span><span class="o">=</span><span class="n">fes</span><span class="o">.</span><span class="n">FreeDofs</span><span class="p">(),</span> <span class="n">freedofsc</span><span class="o">=</span><span class="n">fesc</span><span class="o">.</span><span class="n">FreeDofs</span><span class="p">(),</span>
+                <span class="n">u0</span><span class="o">=</span><span class="n">gfu</span><span class="o">.</span><span class="n">vec</span><span class="p">,</span> <span class="n">invM</span><span class="o">=</span><span class="n">invM</span><span class="p">,</span> <span class="n">applyA</span><span class="o">=</span><span class="n">applyA</span><span class="p">,</span> <span class="n">ndof</span><span class="o">=</span><span class="n">fes</span><span class="o">.</span><span class="n">ndof</span><span class="p">)</span>
+
+<span class="n">coarse</span><span class="p">,</span> <span class="n">fine</span> <span class="o">=</span> <span class="n">setup</span><span class="p">(</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">setup</span><span class="p">(</span><span class="mf">0.04</span><span class="p">)</span>
+<span class="n">ref</span> <span class="o">=</span> <span class="n">DenseReference</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">P</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"coarse"</span><span class="p">,</span> <span class="n">coarse</span><span class="p">),</span> <span class="p">(</span><span class="s2">"fine"</span><span class="p">,</span> <span class="n">fine</span><span class="p">)]:</span>
+    <span class="n">P</span><span class="p">[</span><span class="s2">"lam_max"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lanczos_spectral_bound</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="n">m</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.05</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> mesh: ndof = </span><span class="si">{</span><span class="n">P</span><span class="p">[</span><span class="s1">'ndof'</span><span class="p">]</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">,   lambda_max ~ </span><span class="si">{</span><span class="n">P</span><span class="p">[</span><span class="s1">'lam_max'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"coarse mesh, dense: lambda_max = </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">lam</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>coarse mesh: ndof =  1096,   lambda_max ~ 4.038e+04
+fine mesh: ndof =  6703,   lambda_max ~ 2.526e+05
+coarse mesh, dense: lambda_max = 4.038e+04
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="polynomial-lanczos">
+<h2>1. Polynomial Lanczos<a class="headerlink" href="#polynomial-lanczos" title="Link to this heading">#</a></h2>
+<p><span class="math notranslate nohighlight">\(e^{-\Delta t A}v \approx \beta V_m e^{-\Delta t T_m} e_1\)</span> with <span class="math notranslate nohighlight">\(V_m\)</span> an <span class="math notranslate nohighlight">\(M\)</span>-orthonormal basis of <span class="math notranslate nohighlight">\(\mathcal K_m(A, v)\)</span>. Hochbruck and Lubich (1997) proved for symmetric <span class="math notranslate nohighlight">\(A\)</span> with spectrum in <span class="math notranslate nohighlight">\([0, \rho/\Delta t]\)</span> — i.e. <span class="math notranslate nohighlight">\(\rho = \Delta t\lambda_{\max}\)</span> — the bound</p>
+<div class="math notranslate nohighlight">
+\[
+\|e^{-\Delta t A}v - \beta V_m e^{-\Delta t T_m}e_1\|
+\;\le\; 10\, e^{-m^2/(5\rho)} \|v\| \quad (\sqrt{4\rho} \le m \le 2\rho), \qquad
+\le\; 10\,\rho^{-1} e^{-\rho}\Big(\frac{e\rho}{m}\Big)^m \|v\| \quad (m \ge 2\rho).
+\]</div>
+<p>Nothing happens before <span class="math notranslate nohighlight">\(m \approx \sqrt{\rho}\)</span>, then convergence is superlinear. Since <span class="math notranslate nohighlight">\(\lambda_{\max} \sim h^{-2}\)</span>, the number of iterations grows like <span class="math notranslate nohighlight">\(\sqrt{\Delta t}/h\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span> <span class="n">errs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">(</span><span class="n">krylov_funm</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">th</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">th</span><span class="p">),</span> <span class="n">maxm</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">ex</span><span class="p">))</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">dt</span><span class="o">*</span><span class="n">ref</span><span class="o">.</span><span class="n">lam</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">l</span><span class="p">,</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">ms</span><span class="p">,</span> <span class="n">errs</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s2">"$\Delta t$ = </span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,  $\rho = \Delta t\lambda_</span><span class="se">{{</span><span class="s2">max</span><span class="se">}}</span><span class="s2">$ = </span><span class="si">{</span><span class="n">rho</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">l</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> <span class="n">ls</span><span class="o">=</span><span class="s2">":"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e-14</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Krylov dimension m"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"rel. error"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">"polynomial Lanczos, dotted: $m = \sqrt{\rho}$"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/e7d2c6846e908b55c4c6fd0db26d4cd00c02021eb4705021440c78fe147f81f5.png" src="../_images/e7d2c6846e908b55c4c6fd0db26d4cd00c02021eb4705021440c78fe147f81f5.png" />
+</div>
+</div>
+<p>The number of iterations to reach a given tolerance on the two meshes (<span class="math notranslate nohighlight">\(h\)</span> is halved: <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span> grows by 4, <span class="math notranslate nohighlight">\(m\)</span> by 2):</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'dt'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'coarse m'</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'fine m'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">P</span> <span class="ow">in</span> <span class="p">(</span><span class="n">coarse</span><span class="p">,</span> <span class="n">fine</span><span class="p">):</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">poly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">maxm</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">])</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">();</span> <span class="n">ms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">E</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">"m"</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">8g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">10d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ms</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>      dt   coarse m   fine m
+   0.001         27       61
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>    0.01         74      178
+     0.1          2        2
+</pre></div>
+</div>
+</div>
+</div>
+<section id="error-estimation">
+<h3>Error estimation<a class="headerlink" href="#error-estimation" title="Link to this heading">#</a></h3>
+<p>The Lanczos relation <span class="math notranslate nohighlight">\(A V_m = V_m T_m + t_{m+1,m} v_{m+1} e_m^T\)</span> gives an expression for the residual of the Krylov approximation <span class="math notranslate nohighlight">\(y_m(t) = \beta V_m e^{-tT_m} e_1\)</span> as a solution of the ODE <span class="math notranslate nohighlight">\(y' = -Ay\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+r_m(t) := -A y_m(t) - y_m'(t) = -\beta\, t_{m+1,m}\, \big(e_m^T e^{-tT_m}e_1\big)\, v_{m+1},
+\qquad \|r_m(t)\|_M = \beta\, t_{m+1,m}\, |e_m^T e^{-tT_m}e_1| .
+\]</div>
+<p>This is the classical a-posteriori estimate of Saad (1992); it is also the first term of an error expansion and is usually within a factor of 10 of the true error. Our <code class="docutils literal notranslate"><span class="pre">krylov_funm</span></code> uses the simpler difference between consecutive approximations. Both are compared here for <span class="math notranslate nohighlight">\(\Delta t = 0.01\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span>
+<span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">applyA</span> <span class="o">=</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">]</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">InnerProduct</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">M</span><span class="o">*</span><span class="n">v</span><span class="p">));</span> <span class="n">V</span> <span class="o">=</span> <span class="n">MultiVector</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="n">V</span><span class="o">.</span><span class="n">Append</span><span class="p">((</span><span class="mi">1</span><span class="o">/</span><span class="n">beta</span><span class="p">)</span><span class="o">*</span><span class="n">v</span><span class="p">)</span>
+<span class="n">maxm</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span> <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">maxm</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxm</span><span class="p">));</span> <span class="n">saad</span><span class="p">,</span> <span class="n">diffs</span><span class="p">,</span> <span class="n">true</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[];</span> <span class="n">Eold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxm</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">AppendOrthogonalize</span><span class="p">(</span><span class="n">applyA</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span> <span class="n">ipmat</span><span class="o">=</span><span class="n">M</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">();</span> <span class="n">T</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">th</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">T</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]);</span> <span class="n">E</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">Q</span> <span class="o">@</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">th</span><span class="p">)</span> <span class="o">*</span> <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]))</span>
+    <span class="n">saad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">beta</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">E</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">beta</span><span class="p">)</span>                                   <span class="c1"># Saad residual (relative)</span>
+    <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">E</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Eold</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">Eold</span><span class="p">))))</span> <span class="o">/</span> <span class="n">beta</span><span class="p">);</span> <span class="n">Eold</span> <span class="o">=</span> <span class="n">E</span>
+    <span class="n">true</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">((</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">Vector</span><span class="p">(</span><span class="n">E</span><span class="p">))</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">(),</span> <span class="n">ex</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">));</span> <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxm</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">true</span><span class="p">,</span> <span class="s2">"k-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true error"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxm</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">saad</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Saad residual $</span><span class="se">\\</span><span class="s2">beta</span><span class="se">\\</span><span class="s2">, t_{m+1,m} |e_m^T e^{-</span><span class="se">\\</span><span class="s2">Delta t T_m} e_1|$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxm</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">diffs</span><span class="p">,</span> <span class="s2">":"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"difference of consecutive iterates"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e-14</span><span class="p">,</span> <span class="mf">1e3</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"m"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/9ebd35a70ff7cdcf1da8ae33cdcbacc27a608212e0dab05a555fd7fbed11fe27.png" src="../_images/9ebd35a70ff7cdcf1da8ae33cdcbacc27a608212e0dab05a555fd7fbed11fe27.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="truncated-taylor-series-scipy-sparse-linalg-expm-multiply">
+<h2>2. Truncated Taylor series: <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code><a class="headerlink" href="#truncated-taylor-series-scipy-sparse-linalg-expm-multiply" title="Link to this heading">#</a></h2>
+<p>Al-Mohy and Higham (2011) combine scaling, <span class="math notranslate nohighlight">\(e^{-tA} = (e^{-tA/s})^s\)</span>, with a truncated Taylor series of degree <span class="math notranslate nohighlight">\(\le 55\)</span> for each factor, choosing <span class="math notranslate nohighlight">\(s\)</span> from 1-norm estimates of <span class="math notranslate nohighlight">\(A\)</span> so that the truncation error is at unit roundoff. It is matrix-free and robust (also for non-normal <span class="math notranslate nohighlight">\(A\)</span>), but the total number of products with <span class="math notranslate nohighlight">\(A\)</span> is proportional to <span class="math notranslate nohighlight">\(\Delta t\,\|A\|\)</span>, i.e. linear in <span class="math notranslate nohighlight">\(\rho\)</span> instead of <span class="math notranslate nohighlight">\(\sqrt\rho\)</span> for Lanczos. <code class="docutils literal notranslate"><span class="pre">scipy</span></code> implements exactly this algorithm and accepts a <code class="docutils literal notranslate"><span class="pre">LinearOperator</span></code>; for the 1-norm estimation it also needs the transpose <span class="math notranslate nohighlight">\(A^T = K M^{-1}\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">expm_multiply_FE</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">M</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">invM</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"invM"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"ndof"</span><span class="p">]</span>
+    <span class="n">tmpK</span><span class="p">,</span> <span class="n">tmpM</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">(),</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">(),</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">()</span>
+    <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">matvec</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>                                        <span class="c1"># M^{-1} K z  (numpy in, numpy out)</span>
+        <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">tmpK</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">()[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">();</span> <span class="n">tmpM</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">K</span><span class="o">*</span><span class="n">tmpK</span><span class="p">;</span> <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">invM</span><span class="o">*</span><span class="n">tmpM</span>
+        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rmatvec</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>                                       <span class="c1"># K M^{-1} z</span>
+        <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">tmpK</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">()[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">();</span> <span class="n">tmpM</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">invM</span><span class="o">*</span><span class="n">tmpK</span><span class="p">;</span> <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">K</span><span class="o">*</span><span class="n">tmpM</span>
+        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">Aop</span> <span class="o">=</span> <span class="n">spla</span><span class="o">.</span><span class="n">LinearOperator</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">matvec</span><span class="o">=</span><span class="n">matvec</span><span class="p">,</span> <span class="n">rmatvec</span><span class="o">=</span><span class="n">rmatvec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]</span><span class="o">.</span><span class="n">CreateVector</span><span class="p">()</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">()[:]</span> <span class="o">=</span> <span class="n">spla</span><span class="o">.</span><span class="n">expm_multiply</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">Aop</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]</span><span class="o">.</span><span class="n">FV</span><span class="p">()</span><span class="o">.</span><span class="n">NumPy</span><span class="p">(),</span> <span class="n">traceA</span><span class="o">=-</span><span class="n">dt</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">lam</span><span class="p">))</span> <span class="k">if</span> <span class="n">P</span> <span class="ow">is</span> <span class="n">coarse</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">();</span> <span class="n">res</span><span class="p">,</span> <span class="n">nmv</span> <span class="o">=</span> <span class="n">expm_multiply_FE</span><span class="p">(</span><span class="n">coarse</span><span class="p">,</span> <span class="n">dt</span><span class="p">);</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expm_multiply, coarse mesh, dt = </span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">:  </span><span class="si">{</span><span class="n">nmv</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> products with A,  rel. error </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">ex</span><span class="p">)</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">,  </span><span class="si">{</span><span class="n">t1</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.001:    520 products with A,  rel. error 7.0e-15,  0.06 s
+expm_multiply, coarse mesh, dt = 0.01:   1475 products with A,  rel. error 4.1e-14,  0.15 s
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.1:  11252 products with A,  rel. error 2.7e-13,  1.13 s
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="chebyshev-expansion">
+<h2>3. Chebyshev expansion<a class="headerlink" href="#chebyshev-expansion" title="Link to this heading">#</a></h2>
+<p>For symmetric <span class="math notranslate nohighlight">\(A\)</span> with spectrum in <span class="math notranslate nohighlight">\([0, L]\)</span> one can expand <span class="math notranslate nohighlight">\(e^{-\Delta t\lambda}\)</span> in Chebyshev polynomials on that interval. With <span class="math notranslate nohighlight">\(s = (2\lambda - L)/L \in [-1, 1]\)</span> and <span class="math notranslate nohighlight">\(a = \Delta t L/2\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k = 2(-1)^k e^{-a} I_k(a)
+\]</div>
+<p>(<span class="math notranslate nohighlight">\(I_k\)</span> modified Bessel functions, <span class="math notranslate nohighlight">\(c_0\)</span> halved), and the three-term recurrence <span class="math notranslate nohighlight">\(T_{k+1}(S)v = 2 S\,T_k(S)v - T_{k-1}(S)v\)</span> with <span class="math notranslate nohighlight">\(S = (2A - LI)/L\)</span> needs only three vectors of storage and no inner products — attractive on GPUs and for very large problems where storing a Krylov basis is impossible. The coefficients decay only once <span class="math notranslate nohighlight">\(k &gt; a \approx \rho/2\)</span>, so the degree grows <em>linearly</em> in <span class="math notranslate nohighlight">\(\rho\)</span> (like the Taylor method) and the spectral bound <span class="math notranslate nohighlight">\(L \ge \lambda_{\max}\)</span> must be safe: if <span class="math notranslate nohighlight">\(L &lt; \lambda_{\max}\)</span> the recurrence blows up. We get <span class="math notranslate nohighlight">\(L\)</span> from a few Lanczos steps (largest Ritz value plus its residual bound, times a safety factor), see <code class="docutils literal notranslate"><span class="pre">lanczos_spectral_bound</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">L</span> <span class="o">=</span> <span class="n">lanczos_spectral_bound</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="n">m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"spectral bound L = </span><span class="si">{</span><span class="n">L</span><span class="si">:</span><span class="s2">.4e</span><span class="si">}</span><span class="s2">   (true lambda_max = </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">lam</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4e</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">dt</span><span class="o">*</span><span class="n">L</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span> <span class="n">degs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">a</span> <span class="o">+</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">));</span> <span class="n">errs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">degs</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">(</span><span class="n">chebyshev_exp</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span> <span class="n">ex</span><span class="p">))</span>
+    <span class="n">l</span><span class="p">,</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">degs</span><span class="p">,</span> <span class="n">errs</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s2">"$\Delta t$ = </span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,  $a = \Delta t L/2$ = </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">l</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> <span class="n">ls</span><span class="o">=</span><span class="s2">":"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e-15</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"degree n"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"rel. error"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Chebyshev expansion, dotted: n = a"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>spectral bound L = 4.2565e+04   (true lambda_max = 4.0378e+04)
+</pre></div>
+</div>
+<img alt="../_images/dbf0417ca71ed02e71d071475b5e550e77e3cd6299839498e17c76300463759c.png" src="../_images/dbf0417ca71ed02e71d071475b5e550e77e3cd6299839498e17c76300463759c.png" />
+</div>
+</div>
+</section>
+<section id="shift-and-invert-lanczos">
+<h2>4. Shift-and-invert Lanczos<a class="headerlink" href="#shift-and-invert-lanczos" title="Link to this heading">#</a></h2>
+<p>The Krylov space is built with <span class="math notranslate nohighlight">\(B = (M + \gamma K)^{-1}M = (I + \gamma A)^{-1}\)</span>; the small matrix <span class="math notranslate nohighlight">\(\tilde T_m\)</span> approximates <span class="math notranslate nohighlight">\(B\)</span> and we evaluate <span class="math notranslate nohighlight">\(g(\tilde T_m)\)</span> with <span class="math notranslate nohighlight">\(g(\theta) = e^{-\Delta t(1/\theta - 1)/\gamma}\)</span>. Van den Eshof and Hochbruck (2006) show that the error is bounded by the best approximation error of <span class="math notranslate nohighlight">\(e^{-\Delta t\lambda}\)</span> by rational functions with the single pole <span class="math notranslate nohighlight">\(-1/\gamma\)</span> of multiplicity <span class="math notranslate nohighlight">\(m\)</span>, which is <strong>independent of <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></strong>, and give the following guidance for the shift: <span class="math notranslate nohighlight">\(\gamma \approx \Delta t/10\)</span> for tolerances around <span class="math notranslate nohighlight">\(10^{-6}\)</span>, smaller (<span class="math notranslate nohighlight">\(\Delta t/15\)</span> to <span class="math notranslate nohighlight">\(\Delta t/20\)</span>) for tighter ones; asymptotically <span class="math notranslate nohighlight">\(\gamma_{\rm opt} \approx \sqrt2\,\Delta t/m\)</span>. Too large a <span class="math notranslate nohighlight">\(\gamma\)</span> (e.g. <span class="math notranslate nohighlight">\(\gamma = \Delta t\)</span>) still converges but more slowly. In practice <span class="math notranslate nohighlight">\(\gamma\)</span> is fixed once, since changing it means a new factorisation.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span>
+<span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">gfac</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]:</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gfac</span><span class="o">*</span><span class="n">dt</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span> <span class="n">errs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">:</span>
+        <span class="n">E</span><span class="o">.</span><span class="n">maxm</span> <span class="o">=</span> <span class="n">m</span><span class="p">;</span> <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">((</span><span class="n">E</span><span class="o">*</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">])</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">(),</span> <span class="n">ex</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">ms</span><span class="p">,</span> <span class="n">errs</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s2">"$\gamma = </span><span class="si">{</span><span class="n">gfac</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">\,\Delta t$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e-14</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"m"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"rel. error"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"shift-and-invert Lanczos, $\Delta t$ = </span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/4b4fd259b8d466b6dd1c113f855ea3301df32b85cd2e4910d9b1ca2be6c3b9c9.png" src="../_images/4b4fd259b8d466b6dd1c113f855ea3301df32b85cd2e4910d9b1ca2be6c3b9c9.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Krylov dimension for tol = 1e-8 (gamma = dt/10):"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'dt'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'coarse m'</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'fine m'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">P</span> <span class="ow">in</span> <span class="p">(</span><span class="n">coarse</span><span class="p">,</span> <span class="n">fine</span><span class="p">):</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">])</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">();</span> <span class="n">ms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">E</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">"m"</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">8g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">10d</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ms</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">8d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Krylov dimension for tol = 1e-8 (gamma = dt/10):
+      dt   coarse m   fine m
+   0.001         15       19
+    0.01         19       19
+     0.1         14       14
+</pre></div>
+</div>
+</div>
+</div>
+<section id="inexact-inner-solves">
+<h3>Inexact inner solves<a class="headerlink" href="#inexact-inner-solves" title="Link to this heading">#</a></h3>
+<p>The solves with <span class="math notranslate nohighlight">\(M + \gamma K\)</span> need not be exact: replacing the factorisation by a preconditioned CG iteration with a moderate tolerance still gives a useful approximation (the accuracy is limited by the inner tolerance), which matters in 3D where factorisations are expensive. Here with a Jacobi preconditioner (the right-hand side must be projected onto the free dofs, since CG does not know about the Dirichlet rows). Note that with a loose inner tolerance the outer stopping criterion never triggers — the iterates keep changing at the level of the inner error — so <code class="docutils literal notranslate"><span class="pre">maxm</span></code> becomes the effective stop:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">freedofs</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">;</span> <span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">*</span><span class="n">dt</span>
+<span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+<span class="n">mstar</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateMatrix</span><span class="p">();</span> <span class="n">mstar</span><span class="o">.</span><span class="n">AsVector</span><span class="p">()</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">AsVector</span><span class="p">()</span> <span class="o">+</span> <span class="n">gamma</span><span class="o">*</span><span class="n">K</span><span class="o">.</span><span class="n">AsVector</span><span class="p">()</span>
+<span class="n">jac</span> <span class="o">=</span> <span class="n">mstar</span><span class="o">.</span><span class="n">CreateSmoother</span><span class="p">(</span><span class="n">freedofs</span><span class="p">)</span>
+<span class="n">Pfree</span> <span class="o">=</span> <span class="n">Projector</span><span class="p">(</span><span class="n">freedofs</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">g_exp</span><span class="p">(</span><span class="n">th</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">th</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">th</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">gamma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">cgtol</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">]:</span>
+    <span class="n">cg</span> <span class="o">=</span> <span class="n">CGSolver</span><span class="p">(</span><span class="n">mstar</span><span class="p">,</span> <span class="n">jac</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">cgtol</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">printrates</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">opB</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">CreateColVector</span><span class="p">();</span> <span class="n">tmp</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">M</span><span class="o">*</span><span class="n">z</span><span class="p">;</span> <span class="n">tmp</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Pfree</span><span class="o">*</span><span class="n">tmp</span><span class="p">;</span> <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">cg</span><span class="o">*</span><span class="n">tmp</span><span class="p">;</span> <span class="k">return</span> <span class="n">out</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">yk</span> <span class="o">=</span> <span class="n">krylov_funm</span><span class="p">(</span><span class="n">opB</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">g_exp</span><span class="p">,</span> <span class="n">maxm</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"inner CG tol </span><span class="si">{</span><span class="n">cgtol</span><span class="si">:</span><span class="s2">.0e</span><span class="si">}</span><span class="s2">:  Krylov dim </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'m'</span><span class="p">]</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2">,  rel. error </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">(</span><span class="n">yk</span><span class="p">,</span><span class="w"> </span><span class="n">ex</span><span class="p">)</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>inner CG tol 1e-03:  Krylov dim 40,  rel. error 1.6e-03
+inner CG tol 1e-06:  Krylov dim 40,  rel. error 1.7e-06
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>inner CG tol 1e-09:  Krylov dim 24,  rel. error 1.2e-09
+inner CG tol 1e-12:  Krylov dim 24,  rel. error 8.5e-11
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="contour-integrals-rational-approximation-with-complex-shifts">
+<h2>5. Contour integrals (rational approximation with complex shifts)<a class="headerlink" href="#contour-integrals-rational-approximation-with-complex-shifts" title="Link to this heading">#</a></h2>
+<p>Cauchy’s integral formula for <span class="math notranslate nohighlight">\(f(-\Delta t A)\)</span> with a contour <span class="math notranslate nohighlight">\(\Gamma\)</span> enclosing the (negative) spectrum of <span class="math notranslate nohighlight">\(-A\)</span>, i.e. the interval <span class="math notranslate nohighlight">\([-\lambda_{\max}, -\lambda_{\min}]\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+e^{-\Delta t A}v = \frac{1}{2\pi i}\oint_\Gamma e^{\Delta t z}\,(zI + A)^{-1} v\, dz
+                 = \frac{1}{2\pi i}\oint_\Gamma e^{\Delta t z}\,(zM + K)^{-1} M v\, dz .
+\]</div>
+<p>Since <span class="math notranslate nohighlight">\(e^{\Delta t z}\)</span> decays for <span class="math notranslate nohighlight">\(\mathrm{Re}\,z \to -\infty\)</span>, <span class="math notranslate nohighlight">\(\Gamma\)</span> can be an open curve around the negative real axis, and the trapezoidal rule on such a curve converges geometrically. Weideman and Trefethen (2007) optimised the parabola</p>
+<div class="math notranslate nohighlight">
+\[
+z(\theta) = \frac{N}{\Delta t}\big(0.1309 - 0.1194\,\theta^2 + 0.25\, i\theta\big), \quad \theta \in (-\pi, \pi),
+\]</div>
+<p>with <span class="math notranslate nohighlight">\(N\)</span> midpoint-rule nodes to an error of <span class="math notranslate nohighlight">\(O(2.85^{-N})\)</span>; by conjugate symmetry only the <span class="math notranslate nohighlight">\(N/2\)</span> nodes with <span class="math notranslate nohighlight">\(\theta &gt; 0\)</span> are needed for real data. The result is a <em>rational</em> approximation <span class="math notranslate nohighlight">\(\sum_k w_k (z_kM + K)^{-1}M\)</span> with <span class="math notranslate nohighlight">\(N/2\)</span> complex poles, uniformly accurate for all <span class="math notranslate nohighlight">\(v\)</span>, requiring <span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations (once) and <span class="math notranslate nohighlight">\(N/2\)</span> back-substitutions per application — all independent of each other, hence trivially parallel, and with no inner products or adaptivity. NGSolve needs the matrices on a complex <code class="docutils literal notranslate"><span class="pre">FESpace</span></code> to form <span class="math notranslate nohighlight">\(z_kM + K\)</span>.</p>
+<p>The class <code class="docutils literal notranslate"><span class="pre">ContourExp</span></code> does this; its <code class="docutils literal notranslate"><span class="pre">Phi(k,</span> <span class="pre">x)</span></code> uses the recursion <span class="math notranslate nohighlight">\(\varphi_k(-\Delta tA) = -(\Delta t A)^{-1}\big(\varphi_{k-1}(-\Delta tA) - I/(k-1)!\big)\)</span> with one extra factorisation of <span class="math notranslate nohighlight">\(K\)</span>, because <span class="math notranslate nohighlight">\(\varphi_k(\Delta t z)\)</span> decays only like <span class="math notranslate nohighlight">\(1/z\)</span> along the contour and the trapezoidal rule would lose its geometric convergence.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Ns</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">32</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dts</span><span class="p">:</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span> <span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]))</span>
+    <span class="n">errs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">((</span><span class="n">ContourExp</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"Mc"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"Kc"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofsc"</span><span class="p">],</span> <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">])</span> <span class="o">*</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">])</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">(),</span> <span class="n">ex</span><span class="p">)</span> <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">Ns</span><span class="p">]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">Ns</span><span class="p">,</span> <span class="n">errs</span><span class="p">,</span> <span class="s2">"o-"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s2">"$\Delta t$ = </span><span class="si">{</span><span class="n">dt</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">Ns</span><span class="p">,</span> <span class="p">[</span><span class="mf">2.85</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">N</span><span class="p">)</span> <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="n">Ns</span><span class="p">],</span> <span class="s2">"k:"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"$2.85^{-N}$"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"number of contour points N  (N/2 complex solves)"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"rel. error"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"parabolic contour"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">ContourExp</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"Mc"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"Kc"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofsc"</span><span class="p">],</span> <span class="n">N</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">])</span>
+<span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"invM"</span><span class="p">]</span> <span class="o">*</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">])</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"phi_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> via contour (N=24):  rel. error </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">relerr</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">Phi</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">g</span><span class="p">),</span><span class="w"> </span><span class="n">ref</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span><span class="w"> </span><span class="n">l</span><span class="p">:</span><span class="w"> </span><span class="n">phi</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">l</span><span class="p">),</span><span class="w"> </span><span class="n">ref</span><span class="o">.</span><span class="n">to_np</span><span class="p">(</span><span class="n">g</span><span class="p">)))</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/e73d0c8c112a43f2a4cd92a41e21f56039a74d9b22a7467accfec37c10e01871.png" src="../_images/e73d0c8c112a43f2a4cd92a41e21f56039a74d9b22a7467accfec37c10e01871.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>phi_1 via contour (N=24):  rel. error 3.7e-12
+phi_2 via contour (N=24):  rel. error 1.8e-11
+</pre></div>
+</div>
+</div>
+</div>
+<p>The same idea with the <em>best</em> rational approximation of <span class="math notranslate nohighlight">\(e^{z}\)</span> on <span class="math notranslate nohighlight">\((-\infty, 0]\)</span> (Carathéodory–Fejér, <code class="docutils literal notranslate"><span class="pre">cf</span></code> in Trefethen–Weideman–Schmelzer 2006) needs even fewer poles: the type <span class="math notranslate nohighlight">\((n,n)\)</span> error is <span class="math notranslate nohighlight">\(\approx 2\cdot 9.289^{-n}\)</span>, i.e. <span class="math notranslate nohighlight">\(10^{-12}\)</span> with <span class="math notranslate nohighlight">\(n = 12\)</span>, <span class="math notranslate nohighlight">\(10^{-14}\)</span> with <span class="math notranslate nohighlight">\(n = 14\)</span>. The <code class="docutils literal notranslate"><span class="pre">AAA</span></code> algorithm (<code class="docutils literal notranslate"><span class="pre">scipy.interpolate.AAA</span></code>) can produce such approximants for arbitrary functions, including the <span class="math notranslate nohighlight">\(\varphi_k\)</span>.</p>
+</section>
+<section id="the-augmented-matrix-trick-for-varphi-functions">
+<h2>6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions<a class="headerlink" href="#the-augmented-matrix-trick-for-varphi-functions" title="Link to this heading">#</a></h2>
+<p>For a matrix <span class="math notranslate nohighlight">\(T\)</span> and vector <span class="math notranslate nohighlight">\(b\)</span> (Saad 1992, Sidje 1998, Al-Mohy–Higham 2011)</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\exp\begin{pmatrix} T &amp; b \\ 0 &amp; 0\end{pmatrix} = \begin{pmatrix} e^{T} &amp; \varphi_1(T)\, b \\ 0 &amp; 1\end{pmatrix},
+\end{split}\]</div>
+<p>so one exponential of a matrix of dimension <span class="math notranslate nohighlight">\(m+1\)</span> gives <span class="math notranslate nohighlight">\(\varphi_1(T)b\)</span>, and more generally a <span class="math notranslate nohighlight">\((m+p)\)</span>-dimensional exponential gives <span class="math notranslate nohighlight">\(\sum_{k\le p}\varphi_k(T)b_k\)</span>. Software like <code class="docutils literal notranslate"><span class="pre">expokit</span></code>, <code class="docutils literal notranslate"><span class="pre">phipm</span></code> or <code class="docutils literal notranslate"><span class="pre">KIOPS</span></code> applies this to the <em>large</em> operator <span class="math notranslate nohighlight">\(A\)</span> (the augmented matrix is non-symmetric, so Arnoldi is used). In our setting it is only needed for the small projected matrix, where we evaluate <span class="math notranslate nohighlight">\(\varphi_k(T_m)e_1\)</span> directly through the eigendecomposition — here is the check that both agree:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Tm</span> <span class="o">=</span> <span class="n">T</span><span class="p">[:</span><span class="mi">20</span><span class="p">,</span> <span class="p">:</span><span class="mi">20</span><span class="p">]</span>                                            <span class="c1"># from the Lanczos run above</span>
+<span class="n">aug</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">21</span><span class="p">,</span> <span class="mi">21</span><span class="p">));</span> <span class="n">aug</span><span class="p">[:</span><span class="mi">20</span><span class="p">,</span> <span class="p">:</span><span class="mi">20</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">Tm</span><span class="p">;</span> <span class="n">aug</span><span class="p">[:</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">20</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">phi1_aug</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">expm</span><span class="p">(</span><span class="n">aug</span><span class="p">)[:</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+<span class="n">th</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Tm</span><span class="p">);</span> <span class="n">phi1_eig</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">@</span> <span class="p">(</span><span class="n">phi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="o">*</span><span class="n">th</span><span class="p">)</span> <span class="o">*</span> <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max difference between augmented-matrix and eigendecomposition phi_1(-dt T_m) e_1: </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">phi1_aug</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">phi1_eig</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>max difference between augmented-matrix and eigendecomposition phi_1(-dt T_m) e_1: 3.1e-16
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="comparison-on-the-fine-mesh">
+<h2>7. Comparison on the fine mesh<a class="headerlink" href="#comparison-on-the-fine-mesh" title="Link to this heading">#</a></h2>
+<p>Time per application of <span class="math notranslate nohighlight">\(e^{-\Delta t A}\)</span> for <span class="math notranslate nohighlight">\(\Delta t = 0.01\)</span> at a tolerance of about <span class="math notranslate nohighlight">\(10^{-8}\)</span>. The reference is shift-and-invert Lanczos with tolerance <span class="math notranslate nohighlight">\(10^{-13}\)</span>, cross-checked against the contour integral with <span class="math notranslate nohighlight">\(N = 32\)</span>. Setup costs (factorisations) are listed separately: they are paid once per run if <span class="math notranslate nohighlight">\(\Delta t\)</span> (hence <span class="math notranslate nohighlight">\(\gamma\)</span> and the poles) is fixed.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">;</span> <span class="n">P</span> <span class="o">=</span> <span class="n">fine</span>
+<span class="n">M</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]</span>
+<span class="n">nrm</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">InnerProduct</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">M</span><span class="o">*</span><span class="n">w</span><span class="p">))</span>
+<span class="n">t0</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">();</span> <span class="n">Eref</span> <span class="o">=</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">,</span> <span class="n">maxm</span><span class="o">=</span><span class="mi">100</span><span class="p">);</span> <span class="n">yref</span> <span class="o">=</span> <span class="p">(</span><span class="n">Eref</span><span class="o">*</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">();</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"reference: SI Lanczos m = </span><span class="si">{</span><span class="n">Eref</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">'m'</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">walltime</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+<span class="n">t0</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">();</span> <span class="n">C32</span> <span class="o">=</span> <span class="n">ContourExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"Mc"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"Kc"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofsc"</span><span class="p">],</span> <span class="n">N</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">]);</span> <span class="n">ycont</span> <span class="o">=</span> <span class="p">(</span><span class="n">C32</span><span class="o">*</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">();</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cross-check: contour N=32, </span><span class="si">{</span><span class="n">walltime</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s,  rel. difference </span><span class="si">{</span><span class="n">nrm</span><span class="p">((</span><span class="n">yref</span><span class="o">-</span><span class="n">ycont</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span><span class="o">/</span><span class="n">nrm</span><span class="p">(</span><span class="n">yref</span><span class="p">)</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">timeit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">setup</span><span class="p">,</span> <span class="n">apply</span><span class="p">):</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">();</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">setup</span><span class="p">();</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">();</span> <span class="n">res</span> <span class="o">=</span> <span class="n">apply</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span> <span class="n">ta</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ta</span><span class="p">,</span> <span class="n">nrm</span><span class="p">((</span><span class="n">res</span> <span class="o">-</span> <span class="n">yref</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span><span class="o">/</span><span class="n">nrm</span><span class="p">(</span><span class="n">yref</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">32s</span><span class="si">}</span><span class="s2"> setup </span><span class="si">{</span><span class="n">ts</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2"> s   apply </span><span class="si">{</span><span class="n">ta</span><span class="si">:</span><span class="s2">7.3f</span><span class="si">}</span><span class="s2"> s   rel. error </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">timeit</span><span class="p">(</span><span class="s2">"polynomial Lanczos (tol 1e-8)"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">poly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">maxm</span><span class="o">=</span><span class="mi">400</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">E</span><span class="p">:</span> <span class="p">(</span><span class="n">E</span><span class="o">*</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span>
+<span class="n">timeit</span><span class="p">(</span><span class="s2">"shift-and-invert Lanczos (1e-8)"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">KrylovExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">E</span><span class="p">:</span> <span class="p">(</span><span class="n">E</span><span class="o">*</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span>
+<span class="n">Lf</span> <span class="o">=</span> <span class="n">lanczos_spectral_bound</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">v</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="n">timeit</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Chebyshev (degree </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">dt</span><span class="o">*</span><span class="n">Lf</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">60</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">chebyshev_exp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">v</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">Lf</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dt</span><span class="o">*</span><span class="n">Lf</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">60</span><span class="p">))</span>
+<span class="n">timeit</span><span class="p">(</span><span class="s2">"contour N=24 (12 complex solves)"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ContourExp</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="s2">"Mc"</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="s2">"Kc"</span><span class="p">],</span> <span class="n">dt</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="s2">"freedofsc"</span><span class="p">],</span> <span class="n">N</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">P</span><span class="p">[</span><span class="s2">"M"</span><span class="p">]),</span> <span class="k">lambda</span> <span class="n">C</span><span class="p">:</span> <span class="p">(</span><span class="n">C</span><span class="o">*</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span>
+<span class="n">timeit</span><span class="p">(</span><span class="s2">"expm_multiply (Taylor)"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">expm_multiply_FE</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">dt</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>reference: SI Lanczos m = 33, 0.05 s
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>cross-check: contour N=32, 0.35 s,  rel. difference 7.9e-14
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>polynomial Lanczos (tol 1e-8)    setup   0.010 s   apply   0.599 s   rel. error 7.6e-08
+shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 9.2e-09
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Chebyshev (degree 1386)          setup   0.000 s   apply   0.813 s   rel. error 7.9e-14
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>contour N=24 (12 complex solves) setup   0.224 s   apply   0.047 s   rel. error 2.5e-11
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/mw/0_yqnltn6rbg1msz5s15_vgc0000gn/T/ipykernel_87246/2399729199.py:13: UserWarning: Trace of LinearOperator not available, it will be estimated. Provide `traceA` to ensure performance.
+  res.FV().NumPy()[:] = spla.expm_multiply(-dt*Aop, P["u0"].FV().NumPy(), traceA=-dt*float(np.sum(ref.lam)) if P is coarse else None)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply (Taylor)           setup   0.000 s   apply   4.387 s   rel. error 9.0e-14
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">);</span> <span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">];</span> <span class="n">ta</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">));</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">ta</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"apply"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">yy</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"setup (factorisations)"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">yy</span><span class="p">,</span> <span class="n">names</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"seconds"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"x"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fine mesh, ndof = </span><span class="si">{</span><span class="n">P</span><span class="p">[</span><span class="s1">'ndof'</span><span class="p">]</span><span class="si">}</span><span class="s2">, dt = </span><span class="si">{</span><span class="n">dt</span><span class="si">}</span><span class="s2">"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/ba638a488aee55f6145e14fc110e2ae987a454b8ba5502e367cc06b4f5b7778f.png" src="../_images/ba638a488aee55f6145e14fc110e2ae987a454b8ba5502e367cc06b4f5b7778f.png" />
+</div>
+</div>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Polynomial methods</strong> (Lanczos, Taylor/<code class="docutils literal notranslate"><span class="pre">expm_multiply</span></code>, Chebyshev) need only products with <span class="math notranslate nohighlight">\(A\)</span> — each a mass matrix solve here — but their cost grows with <span class="math notranslate nohighlight">\(\Delta t\lambda_{\max} \sim \Delta t/h^2\)</span>: <span class="math notranslate nohighlight">\(\sqrt{\rho}\)</span> iterations for Lanczos, <span class="math notranslate nohighlight">\(\rho\)</span> for the other two. They are the methods of choice when no factorisation is affordable (very large 3D problems, GPUs) and <span class="math notranslate nohighlight">\(\Delta t\)</span> is small.</p></li>
+<li><p><strong>Shift-and-invert Lanczos</strong> costs one factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span> (the implicit Euler matrix) and 10–30 back-substitutions per step, independent of <span class="math notranslate nohighlight">\(h\)</span> and <span class="math notranslate nohighlight">\(\Delta t\)</span>; with an inner iterative solver it also works matrix-free.</p></li>
+<li><p><strong>Contour integrals / rational approximations</strong> cost <span class="math notranslate nohighlight">\(N/2 \approx 12\)</span> complex factorisations and as many back-substitutions per step, with no inner products and perfect parallelism; the same poles serve all <span class="math notranslate nohighlight">\(\varphi_k\)</span> (with the recursion via <span class="math notranslate nohighlight">\(K^{-1}\)</span>).</p></li>
+<li><p>All methods evaluate <span class="math notranslate nohighlight">\(\varphi\)</span>-functions through the same machinery; use the eigendecomposition (or the augmented matrix) of the small projected matrix, never <span class="math notranslate nohighlight">\((e^z - 1)/z\)</span> in floating point for small <span class="math notranslate nohighlight">\(z\)</span>.</p></li>
+</ul>
+<p>Not covered here: restarted Krylov methods (Eiermann–Ernst 2006; Afanasjew et al. 2008) to bound the basis size, Leja interpolation (Caliari et al.), extended and general rational Krylov spaces (Güttel 2013), and adaptive substepping as in <code class="docutils literal notranslate"><span class="pre">expokit</span></code>/<code class="docutils literal notranslate"><span class="pre">phipm</span></code>/<code class="docutils literal notranslate"><span class="pre">KIOPS</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># tests</span>
+<span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="s2">"shift-and-invert Lanczos (1e-8)"</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-7</span>
+<span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="s2">"contour N=24 (12 complex solves)"</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-9</span>
+<span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="s2">"polynomial Lanczos (tol 1e-8)"</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-6</span>
+<span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="s2">"Chebyshev (degree </span><span class="si">%d</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">dt</span><span class="o">*</span><span class="n">Lf</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">60</span><span class="p">)][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
+<span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="s2">"expm_multiply (Taylor)"</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
+<span class="k">assert</span> <span class="n">nrm</span><span class="p">((</span><span class="n">yref</span><span class="o">-</span><span class="n">ycont</span><span class="p">)</span><span class="o">.</span><span class="n">Evaluate</span><span class="p">())</span><span class="o">/</span><span class="n">nrm</span><span class="p">(</span><span class="n">yref</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"all tests passed"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>all tests passed
+</pre></div>
+</div>
+</div>
+</div>
+<section id="references">
+<h3>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>A. H. Al-Mohy, N. J. Higham, <em>Computing the action of the matrix exponential, with an application to exponential integrators</em>, SIAM J. Sci. Comput. 33 (2011) 488–511. <a class="reference external" href="https://doi.org/10.1137/100788860">doi:10.1137/100788860</a></p></li>
+<li><p>L. Bergamaschi, M. Vianello, <em>Efficient computation of the exponential operator for large, sparse, symmetric matrices</em>, Numer. Linear Algebra Appl. 7 (2000) 27–45.</p></li>
+<li><p>V. Druskin, L. Knizhnerman, <em>Two polynomial methods of calculating functions of symmetric matrices</em>, USSR Comput. Math. Math. Phys. 29 (1989) 112–121.</p></li>
+<li><p>M. Eiermann, O. G. Ernst, <em>A restarted Krylov subspace method for the evaluation of matrix functions</em>, SIAM J. Numer. Anal. 44 (2006) 2481–2504. <a class="reference external" href="https://doi.org/10.1137/050633846">doi:10.1137/050633846</a></p></li>
+<li><p>J. van den Eshof, M. Hochbruck, <em>Preconditioning Lanczos approximations to the matrix exponential</em>, SIAM J. Sci. Comput. 27 (2006) 1438–1457. <a class="reference external" href="https://doi.org/10.1137/040605461">doi:10.1137/040605461</a></p></li>
+<li><p>S. Güttel, <em>Rational Krylov approximation of matrix functions: numerical methods and optimal pole selection</em>, GAMM-Mitt. 36 (2013) 8–31. <a class="reference external" href="https://doi.org/10.1002/gamm.201310002">doi:10.1002/gamm.201310002</a></p></li>
+<li><p>M. Hochbruck, C. Lubich, <em>On Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 34 (1997) 1911–1925. <a class="reference external" href="https://doi.org/10.1137/S0036142995280572">doi:10.1137/S0036142995280572</a></p></li>
+<li><p>Y. Saad, <em>Analysis of some Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 29 (1992) 209–228. <a class="reference external" href="https://doi.org/10.1137/0729014">doi:10.1137/0729014</a></p></li>
+<li><p>R. B. Sidje, <em>Expokit: a software package for computing matrix exponentials</em>, ACM Trans. Math. Softw. 24 (1998) 130–156. <a class="reference external" href="https://doi.org/10.1145/285861.285868">doi:10.1145/285861.285868</a></p></li>
+<li><p>L. N. Trefethen, J. A. C. Weideman, T. Schmelzer, <em>Talbot quadratures and rational approximations</em>, BIT 46 (2006) 653–670. <a class="reference external" href="https://doi.org/10.1007/s10543-006-0077-9">doi:10.1007/s10543-006-0077-9</a></p></li>
+<li><p>J. A. C. Weideman, L. N. Trefethen, <em>Parabolic and hyperbolic contours for computing the Bromwich integral</em>, Math. Comp. 76 (2007) 1341–1356. <a class="reference external" href="https://doi.org/10.1090/S0025-5718-07-01945-X">doi:10.1090/S0025-5718-07-01945-X</a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "ngsolve-netgen"
+        },
+        kernelOptions: {
+            name: "ngsolve-netgen",
+            path: "./02_matrix_exponential_methods"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'ngsolve-netgen'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../01_heat_exponential_euler/expint_heat.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Exponential integrators in NGSolve — Part 1: exponential Euler with Krylov subspaces</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../03_convection_diffusion_and_sources/convdiff_expRK.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Exponential integrators in NGSolve — Part 3: non-symmetric operators and time-dependent sources</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-the-heat-equation-on-two-meshes">Setup: the heat equation on two meshes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#polynomial-lanczos">1. Polynomial Lanczos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-estimation">Error estimation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#truncated-taylor-series-scipy-sparse-linalg-expm-multiply">2. Truncated Taylor series: <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#chebyshev-expansion">3. Chebyshev expansion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shift-and-invert-lanczos">4. Shift-and-invert Lanczos</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inexact-inner-solves">Inexact inner solves</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals-rational-approximation-with-complex-shifts">5. Contour integrals (rational approximation with complex shifts)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick-for-varphi-functions">6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-on-the-fine-mesh">7. Comparison on the fine mesh</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Edoardo Bonetti
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=55c26ed414f5f8a31ebb"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=55c26ed414f5f8a31ebb"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
