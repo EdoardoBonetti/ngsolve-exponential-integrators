@@ -1,0 +1,7 @@
+jupyter-book>=1.0,<2
+ngsolve
+webgui_jupyter_widgets
+numpy
+scipy
+matplotlib
+ipykernel

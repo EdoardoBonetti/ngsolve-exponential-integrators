@@ -1,0 +1,7 @@
+format: jb-book
+root: README
+chapters:
+  - file: 01_heat_exponential_euler/expint_heat
+  - file: 02_matrix_exponential_methods/matrix_functions
+  - file: 03_convection_diffusion_and_sources/convdiff_expRK
+  - file: 04_nonlinear_allen_cahn/allen_cahn_exprb

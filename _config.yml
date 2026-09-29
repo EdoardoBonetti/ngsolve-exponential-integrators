@@ -1,0 +1,25 @@
+title: Exponential integrators in NGSolve
+author: Edoardo Bonetti
+copyright: "2026"
+logo: ""
+exclude_patterns: [old/**, tests/**, _build/**, .github/**, "**/.ipynb_checkpoints"]
+only_build_toc_files: true
+
+# Notebooks are stored without outputs and executed when the book is built
+# (the GitHub Actions workflow installs NGSolve from PyPI).  Set to "off" to
+# build without executing.
+execute:
+  execute_notebooks: auto
+  timeout: 1200
+  allow_errors: false
+
+repository:
+  url: https://github.com/EdoardoBonetti/ngsolve-exponential-integrators
+  branch: main
+html:
+  use_repository_button: true
+  use_issues_button: true
+sphinx:
+  config:
+    html_theme_options:
+      repository_url: https://github.com/EdoardoBonetti/ngsolve-exponential-integrators
