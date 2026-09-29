@@ -45,11 +45,16 @@ Tests:
 python3 -m pytest tests -q
 ```
 
-Jupyter Book:
+Jupyter Book (the published version is https://edoardobonetti.github.io/ngsolve-exponential-integrators/):
 
 ```bash
-pip install jupyter-book && jupyter-book build .
+pip install jupyter-book ghp-import
+jupyter-book build .            # executes the notebooks with the "ngsolve-netgen" kernel (see _config.yml)
+ghp-import -n -p -f _build/html # pushes the HTML to the gh-pages branch, which GitHub Pages serves
 ```
+
+The notebooks are stored without outputs; the book is built and published from this machine,
+so no NGSolve installation is needed on GitHub.
 
 ## The methods in one table
 

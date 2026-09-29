@@ -21,5 +21,9 @@ html:
   use_issues_button: true
 sphinx:
   config:
+    # execute the notebooks with the kernel that has NGSolve on its path
+    # (kernelspec "ngsolve-netgen" in ~/Library/Jupyter/kernels on this machine)
+    nb_kernel_rgx_aliases:
+      python3: ngsolve-netgen
     html_theme_options:
       repository_url: https://github.com/EdoardoBonetti/ngsolve-exponential-integrators
