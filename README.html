@@ -439,10 +439,14 @@ select the Jupyter kernel <strong>“Python 3 (NGSolve, Netgen.app)”</strong> 
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-q
 </pre></div>
 </div>
-<p>Jupyter Book:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>jupyter-book<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>jupyter-book<span class="w"> </span>build<span class="w"> </span>.
+<p>Jupyter Book (the published version is <a class="reference external" href="https://edoardobonetti.github.io/ngsolve-exponential-integrators/">https://edoardobonetti.github.io/ngsolve-exponential-integrators/</a>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>jupyter-book<span class="w"> </span>ghp-import
+jupyter-book<span class="w"> </span>build<span class="w"> </span>.<span class="w">            </span><span class="c1"># executes the notebooks with the "ngsolve-netgen" kernel (see _config.yml)</span>
+ghp-import<span class="w"> </span>-n<span class="w"> </span>-p<span class="w"> </span>-f<span class="w"> </span>_build/html<span class="w"> </span><span class="c1"># pushes the HTML to the gh-pages branch, which GitHub Pages serves</span>
 </pre></div>
 </div>
+<p>The notebooks are stored without outputs; the book is built and published from this machine,
+so no NGSolve installation is needed on GitHub.</p>
 </section>
 <section id="the-methods-in-one-table">
 <h2>The methods in one table<a class="headerlink" href="#the-methods-in-one-table" title="Link to this heading">#</a></h2>

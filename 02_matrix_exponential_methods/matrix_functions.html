@@ -357,7 +357,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-the-heat-equation-on-two-meshes">Setup: the heat equation on two meshes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#polynomial-lanczos">1. Polynomial Lanczos</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-estimation">Error estimation</a></li>
 </ul>
@@ -368,13 +368,10 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inexact-inner-solves">Inexact inner solves</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals-rational-approximation-with-complex-shifts">5. Contour integrals (rational approximation with complex shifts)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick-for-varphi-functions">6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals">5. Contour integrals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick">6. The augmented matrix trick</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-on-the-fine-mesh">7. Comparison on the fine mesh</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
 </ul>
             </nav>
         </div>
@@ -388,17 +385,11 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="exponential-integrators-in-ngsolve-part-2-computing-e-ta-v-for-a-large-sparse-fe-operator">
 <h1>Exponential integrators in NGSolve — Part 2: computing <span class="math notranslate nohighlight">\(e^{-tA}v\)</span> for a large sparse FE operator<a class="headerlink" href="#exponential-integrators-in-ngsolve-part-2-computing-e-ta-v-for-a-large-sparse-fe-operator" title="Link to this heading">#</a></h1>
-<p>Part 1 introduced exponential Euler and used shift-and-invert Lanczos to apply <span class="math notranslate nohighlight">\(e^{-\Delta t A}\)</span>, <span class="math notranslate nohighlight">\(A = M^{-1}K\)</span>. This notebook is a survey of the practical alternatives and of their cost, always for the finite element setting where</p>
-<ul class="simple">
-<li><p>a product with <span class="math notranslate nohighlight">\(A\)</span> costs one product with <span class="math notranslate nohighlight">\(K\)</span> <strong>plus one solve with the mass matrix</strong> <span class="math notranslate nohighlight">\(M\)</span>,</p></li>
-<li><p>a solve with <span class="math notranslate nohighlight">\((I + \gamma A) = M^{-1}(M + \gamma K)\)</span> costs one sparse back-substitution with a factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span> (the implicit Euler matrix),</p></li>
-<li><p>a solve with <span class="math notranslate nohighlight">\((zI + A)\)</span> for complex <span class="math notranslate nohighlight">\(z\)</span> costs one <em>complex</em> back-substitution.</p></li>
-</ul>
-<p>We compare</p>
+<p>Alternatives to the shift-and-invert Lanczos method of Part 1, compared with the finite element cost model in mind: a product with <span class="math notranslate nohighlight">\(A = M^{-1}K\)</span> costs one <strong>mass matrix solve</strong>, a solve with <span class="math notranslate nohighlight">\(I + \gamma A\)</span> one back-substitution with a factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span>, and complex shifts need complex factorisations.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>method</p></th>
-<th class="head"><p>what it needs</p></th>
+<th class="head"><p>needs</p></th>
 <th class="head"><p>iterations for tolerance <span class="math notranslate nohighlight">\(\varepsilon\)</span></p></th>
 <th class="head"><p>mesh dependent?</p></th>
 </tr>
@@ -409,30 +400,30 @@
 <td><p><span class="math notranslate nohighlight">\(\approx \sqrt{\Delta t\lambda_{\max}} + O(\log 1/\varepsilon)\)</span></p></td>
 <td><p>yes</p></td>
 </tr>
-<tr class="row-odd"><td><p>truncated Taylor, <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code> (Al-Mohy–Higham)</p></td>
+<tr class="row-odd"><td><p>truncated Taylor, <code class="docutils literal notranslate"><span class="pre">expm_multiply</span></code> (Al-Mohy–Higham)</p></td>
 <td><p>products with <span class="math notranslate nohighlight">\(A\)</span></p></td>
 <td><p><span class="math notranslate nohighlight">\(\propto \Delta t\lambda_{\max}\)</span></p></td>
 <td><p>yes</p></td>
 </tr>
-<tr class="row-even"><td><p>Chebyshev expansion (Druskin–Knizhnerman, Bergamaschi–Vianello)</p></td>
-<td><p>products with <span class="math notranslate nohighlight">\(A\)</span> + a bound for <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></p></td>
+<tr class="row-even"><td><p>Chebyshev expansion</p></td>
+<td><p>products with <span class="math notranslate nohighlight">\(A\)</span>, bound for <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></p></td>
 <td><p><span class="math notranslate nohighlight">\(\approx \Delta t\lambda_{\max}/2 + O(\log 1/\varepsilon)\)</span></p></td>
 <td><p>yes</p></td>
 </tr>
-<tr class="row-odd"><td><p><strong>shift-and-invert Lanczos</strong> (van den Eshof–Hochbruck)</p></td>
+<tr class="row-odd"><td><p><strong>shift-and-invert Lanczos</strong></p></td>
 <td><p>one factorisation of <span class="math notranslate nohighlight">\(M+\gamma K\)</span></p></td>
 <td><p>10–30</p></td>
 <td><p><strong>no</strong></p></td>
 </tr>
-<tr class="row-even"><td><p><strong>contour integral / rational approximation</strong> (Trefethen–Weideman–Schmelzer)</p></td>
-<td><p><span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations of <span class="math notranslate nohighlight">\(z_kM + K\)</span></p></td>
+<tr class="row-even"><td><p><strong>contour integral</strong> (Weideman–Trefethen)</p></td>
+<td><p><span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations</p></td>
 <td><p><span class="math notranslate nohighlight">\(N = 16\)</span>–<span class="math notranslate nohighlight">\(32\)</span></p></td>
 <td><p><strong>no</strong></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>The helpers of Part 1 (and a few more) are collected in <code class="docutils literal notranslate"><span class="pre">expint_tools.py</span></code> one directory up.</p>
+<p>The helpers are collected in <code class="docutils literal notranslate"><span class="pre">expint_tools.py</span></code> one directory up.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span>
@@ -448,9 +439,9 @@
 </div>
 </div>
 </div>
-<section id="setup-the-heat-equation-on-two-meshes">
-<h2>Setup: the heat equation on two meshes<a class="headerlink" href="#setup-the-heat-equation-on-two-meshes" title="Link to this heading">#</a></h2>
-<p>Same model problem as in Part 1 (unit square, Dirichlet everywhere, order 3, rough initial datum). On the coarse mesh the dense generalised eigenproblem gives us the exact <span class="math notranslate nohighlight">\(e^{-tA}v\)</span>; on the fine mesh we use shift-and-invert Lanczos with a very tight tolerance as reference and cross-check it against the contour integral.</p>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
+<p>Same problem as in Part 1 on two meshes. Coarse mesh: dense eigenproblem as reference. Fine mesh: shift-and-invert Lanczos with tolerance <span class="math notranslate nohighlight">\(10^{-13}\)</span>, cross-checked against the contour integral.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">maxh</span><span class="p">):</span>
@@ -493,14 +484,7 @@ coarse mesh, dense: lambda_max = 4.038e+04
 </section>
 <section id="polynomial-lanczos">
 <h2>1. Polynomial Lanczos<a class="headerlink" href="#polynomial-lanczos" title="Link to this heading">#</a></h2>
-<p><span class="math notranslate nohighlight">\(e^{-\Delta t A}v \approx \beta V_m e^{-\Delta t T_m} e_1\)</span> with <span class="math notranslate nohighlight">\(V_m\)</span> an <span class="math notranslate nohighlight">\(M\)</span>-orthonormal basis of <span class="math notranslate nohighlight">\(\mathcal K_m(A, v)\)</span>. Hochbruck and Lubich (1997) proved for symmetric <span class="math notranslate nohighlight">\(A\)</span> with spectrum in <span class="math notranslate nohighlight">\([0, \rho/\Delta t]\)</span> — i.e. <span class="math notranslate nohighlight">\(\rho = \Delta t\lambda_{\max}\)</span> — the bound</p>
-<div class="math notranslate nohighlight">
-\[
-\|e^{-\Delta t A}v - \beta V_m e^{-\Delta t T_m}e_1\|
-\;\le\; 10\, e^{-m^2/(5\rho)} \|v\| \quad (\sqrt{4\rho} \le m \le 2\rho), \qquad
-\le\; 10\,\rho^{-1} e^{-\rho}\Big(\frac{e\rho}{m}\Big)^m \|v\| \quad (m \ge 2\rho).
-\]</div>
-<p>Nothing happens before <span class="math notranslate nohighlight">\(m \approx \sqrt{\rho}\)</span>, then convergence is superlinear. Since <span class="math notranslate nohighlight">\(\lambda_{\max} \sim h^{-2}\)</span>, the number of iterations grows like <span class="math notranslate nohighlight">\(\sqrt{\Delta t}/h\)</span>.</p>
+<p>Hochbruck–Lubich (1997): with <span class="math notranslate nohighlight">\(\rho = \Delta t\lambda_{\max}\)</span> the error is <span class="math notranslate nohighlight">\(\lesssim 10\,e^{-m^2/(5\rho)}\)</span> for <span class="math notranslate nohighlight">\(\sqrt{4\rho} \le m \le 2\rho\)</span> — nothing happens before <span class="math notranslate nohighlight">\(m \approx \sqrt\rho\)</span>, then convergence is superlinear. Since <span class="math notranslate nohighlight">\(\lambda_{\max} \sim h^{-2}\)</span>, <span class="math notranslate nohighlight">\(m\)</span> grows like <span class="math notranslate nohighlight">\(\sqrt{\Delta t}/h\)</span>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">]</span>
@@ -519,10 +503,10 @@ coarse mesh, dense: lambda_max = 4.038e+04
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/e7d2c6846e908b55c4c6fd0db26d4cd00c02021eb4705021440c78fe147f81f5.png" src="../_images/e7d2c6846e908b55c4c6fd0db26d4cd00c02021eb4705021440c78fe147f81f5.png" />
+<img alt="../_images/1607517021b3cd44af52cdde79da6af03fbca8b9c105114811845b88be27b1be.png" src="../_images/1607517021b3cd44af52cdde79da6af03fbca8b9c105114811845b88be27b1be.png" />
 </div>
 </div>
-<p>The number of iterations to reach a given tolerance on the two meshes (<span class="math notranslate nohighlight">\(h\)</span> is halved: <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span> grows by 4, <span class="math notranslate nohighlight">\(m\)</span> by 2):</p>
+<p>Iterations for tolerance <span class="math notranslate nohighlight">\(10^{-8}\)</span> on the two meshes (<span class="math notranslate nohighlight">\(h\)</span> halved: <span class="math notranslate nohighlight">\(m\)</span> doubles):</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'dt'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'coarse m'</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'fine m'</span><span class="si">:</span><span class="s2">&gt;8s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -548,13 +532,7 @@ coarse mesh, dense: lambda_max = 4.038e+04
 </div>
 <section id="error-estimation">
 <h3>Error estimation<a class="headerlink" href="#error-estimation" title="Link to this heading">#</a></h3>
-<p>The Lanczos relation <span class="math notranslate nohighlight">\(A V_m = V_m T_m + t_{m+1,m} v_{m+1} e_m^T\)</span> gives an expression for the residual of the Krylov approximation <span class="math notranslate nohighlight">\(y_m(t) = \beta V_m e^{-tT_m} e_1\)</span> as a solution of the ODE <span class="math notranslate nohighlight">\(y' = -Ay\)</span>:</p>
-<div class="math notranslate nohighlight">
-\[
-r_m(t) := -A y_m(t) - y_m'(t) = -\beta\, t_{m+1,m}\, \big(e_m^T e^{-tT_m}e_1\big)\, v_{m+1},
-\qquad \|r_m(t)\|_M = \beta\, t_{m+1,m}\, |e_m^T e^{-tT_m}e_1| .
-\]</div>
-<p>This is the classical a-posteriori estimate of Saad (1992); it is also the first term of an error expansion and is usually within a factor of 10 of the true error. Our <code class="docutils literal notranslate"><span class="pre">krylov_funm</span></code> uses the simpler difference between consecutive approximations. Both are compared here for <span class="math notranslate nohighlight">\(\Delta t = 0.01\)</span>.</p>
+<p>From <span class="math notranslate nohighlight">\(AV_m = V_mT_m + t_{m+1,m}v_{m+1}e_m^T\)</span>, the residual of <span class="math notranslate nohighlight">\(y_m(t) = \beta V_m e^{-tT_m}e_1\)</span> as a solution of <span class="math notranslate nohighlight">\(y' = -Ay\)</span> is <span class="math notranslate nohighlight">\(\|r_m(t)\|_M = \beta\, t_{m+1,m}\, |e_m^T e^{-tT_m}e_1|\)</span> (Saad 1992), usually within a factor 10 of the true error. <code class="docutils literal notranslate"><span class="pre">krylov_funm</span></code> uses the difference of consecutive approximations instead; both are compared here.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span>
@@ -576,14 +554,14 @@ r_m(t) := -A y_m(t) - y_m'(t) = -\beta\, t_{m+1,m}\, \big(e_m^T e^{-tT_m}e_1\big
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/9ebd35a70ff7cdcf1da8ae33cdcbacc27a608212e0dab05a555fd7fbed11fe27.png" src="../_images/9ebd35a70ff7cdcf1da8ae33cdcbacc27a608212e0dab05a555fd7fbed11fe27.png" />
+<img alt="../_images/f603716eba82079529698555cff2203a8fedb62dfb76fc784684edf8b0876bfc.png" src="../_images/f603716eba82079529698555cff2203a8fedb62dfb76fc784684edf8b0876bfc.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="truncated-taylor-series-scipy-sparse-linalg-expm-multiply">
 <h2>2. Truncated Taylor series: <code class="docutils literal notranslate"><span class="pre">scipy.sparse.linalg.expm_multiply</span></code><a class="headerlink" href="#truncated-taylor-series-scipy-sparse-linalg-expm-multiply" title="Link to this heading">#</a></h2>
-<p>Al-Mohy and Higham (2011) combine scaling, <span class="math notranslate nohighlight">\(e^{-tA} = (e^{-tA/s})^s\)</span>, with a truncated Taylor series of degree <span class="math notranslate nohighlight">\(\le 55\)</span> for each factor, choosing <span class="math notranslate nohighlight">\(s\)</span> from 1-norm estimates of <span class="math notranslate nohighlight">\(A\)</span> so that the truncation error is at unit roundoff. It is matrix-free and robust (also for non-normal <span class="math notranslate nohighlight">\(A\)</span>), but the total number of products with <span class="math notranslate nohighlight">\(A\)</span> is proportional to <span class="math notranslate nohighlight">\(\Delta t\,\|A\|\)</span>, i.e. linear in <span class="math notranslate nohighlight">\(\rho\)</span> instead of <span class="math notranslate nohighlight">\(\sqrt\rho\)</span> for Lanczos. <code class="docutils literal notranslate"><span class="pre">scipy</span></code> implements exactly this algorithm and accepts a <code class="docutils literal notranslate"><span class="pre">LinearOperator</span></code>; for the 1-norm estimation it also needs the transpose <span class="math notranslate nohighlight">\(A^T = K M^{-1}\)</span>.</p>
+<p>Al-Mohy–Higham (2011): scaling <span class="math notranslate nohighlight">\(e^{-tA} = (e^{-tA/s})^s\)</span> plus a Taylor polynomial of degree <span class="math notranslate nohighlight">\(\le 55\)</span>, with <span class="math notranslate nohighlight">\(s\)</span> chosen from 1-norm estimates. Matrix-free and robust, but the number of products with <span class="math notranslate nohighlight">\(A\)</span> is proportional to <span class="math notranslate nohighlight">\(\rho\)</span> rather than <span class="math notranslate nohighlight">\(\sqrt\rho\)</span>. It accepts a <code class="docutils literal notranslate"><span class="pre">LinearOperator</span></code>; the transpose <span class="math notranslate nohighlight">\(KM^{-1}\)</span> is needed for the norm estimate.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">expm_multiply_FE</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
@@ -609,11 +587,11 @@ r_m(t) := -A y_m(t) - y_m'(t) = -\beta\, t_{m+1,m}\, \big(e_m^T e^{-tT_m}e_1\big
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.001:    520 products with A,  rel. error 7.0e-15,  0.06 s
-expm_multiply, coarse mesh, dt = 0.01:   1475 products with A,  rel. error 4.1e-14,  0.15 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.001:    504 products with A,  rel. error 7.0e-15,  0.06 s
+expm_multiply, coarse mesh, dt = 0.01:   1475 products with A,  rel. error 4.1e-14,  0.17 s
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.1:  11252 products with A,  rel. error 2.7e-13,  1.13 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply, coarse mesh, dt = 0.1:  11252 products with A,  rel. error 2.7e-13,  1.25 s
 </pre></div>
 </div>
 </div>
@@ -621,12 +599,12 @@ expm_multiply, coarse mesh, dt = 0.01:   1475 products with A,  rel. error 4.1e-
 </section>
 <section id="chebyshev-expansion">
 <h2>3. Chebyshev expansion<a class="headerlink" href="#chebyshev-expansion" title="Link to this heading">#</a></h2>
-<p>For symmetric <span class="math notranslate nohighlight">\(A\)</span> with spectrum in <span class="math notranslate nohighlight">\([0, L]\)</span> one can expand <span class="math notranslate nohighlight">\(e^{-\Delta t\lambda}\)</span> in Chebyshev polynomials on that interval. With <span class="math notranslate nohighlight">\(s = (2\lambda - L)/L \in [-1, 1]\)</span> and <span class="math notranslate nohighlight">\(a = \Delta t L/2\)</span>,</p>
+<p>For a spectrum in <span class="math notranslate nohighlight">\([0, L]\)</span>, with <span class="math notranslate nohighlight">\(s = (2\lambda - L)/L\)</span> and <span class="math notranslate nohighlight">\(a = \Delta tL/2\)</span>,</p>
 <div class="math notranslate nohighlight">
 \[
-e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k = 2(-1)^k e^{-a} I_k(a)
+e^{-\Delta t\lambda} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k = 2(-1)^k e^{-a} I_k(a)
 \]</div>
-<p>(<span class="math notranslate nohighlight">\(I_k\)</span> modified Bessel functions, <span class="math notranslate nohighlight">\(c_0\)</span> halved), and the three-term recurrence <span class="math notranslate nohighlight">\(T_{k+1}(S)v = 2 S\,T_k(S)v - T_{k-1}(S)v\)</span> with <span class="math notranslate nohighlight">\(S = (2A - LI)/L\)</span> needs only three vectors of storage and no inner products — attractive on GPUs and for very large problems where storing a Krylov basis is impossible. The coefficients decay only once <span class="math notranslate nohighlight">\(k &gt; a \approx \rho/2\)</span>, so the degree grows <em>linearly</em> in <span class="math notranslate nohighlight">\(\rho\)</span> (like the Taylor method) and the spectral bound <span class="math notranslate nohighlight">\(L \ge \lambda_{\max}\)</span> must be safe: if <span class="math notranslate nohighlight">\(L &lt; \lambda_{\max}\)</span> the recurrence blows up. We get <span class="math notranslate nohighlight">\(L\)</span> from a few Lanczos steps (largest Ritz value plus its residual bound, times a safety factor), see <code class="docutils literal notranslate"><span class="pre">lanczos_spectral_bound</span></code>.</p>
+<p>(<span class="math notranslate nohighlight">\(I_k\)</span> modified Bessel functions, <span class="math notranslate nohighlight">\(c_0\)</span> halved). The three-term recurrence needs three vectors and no inner products — GPU friendly — but the degree grows like <span class="math notranslate nohighlight">\(a \approx \rho/2\)</span>, and <span class="math notranslate nohighlight">\(L \ge \lambda_{\max}\)</span> must be safe, otherwise the recurrence blows up. <code class="docutils literal notranslate"><span class="pre">lanczos_spectral_bound</span></code> obtains <span class="math notranslate nohighlight">\(L\)</span> from a few Lanczos steps.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">L</span> <span class="o">=</span> <span class="n">lanczos_spectral_bound</span><span class="p">(</span><span class="n">coarse</span><span class="p">[</span><span class="s2">"applyA"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">],</span> <span class="n">m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
@@ -647,13 +625,13 @@ e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k =
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>spectral bound L = 4.2565e+04   (true lambda_max = 4.0378e+04)
 </pre></div>
 </div>
-<img alt="../_images/dbf0417ca71ed02e71d071475b5e550e77e3cd6299839498e17c76300463759c.png" src="../_images/dbf0417ca71ed02e71d071475b5e550e77e3cd6299839498e17c76300463759c.png" />
+<img alt="../_images/42c788ed5dd450f80c738300657c3cf6d2f38958bb578aea63c6828e3ac1b220.png" src="../_images/42c788ed5dd450f80c738300657c3cf6d2f38958bb578aea63c6828e3ac1b220.png" />
 </div>
 </div>
 </section>
 <section id="shift-and-invert-lanczos">
 <h2>4. Shift-and-invert Lanczos<a class="headerlink" href="#shift-and-invert-lanczos" title="Link to this heading">#</a></h2>
-<p>The Krylov space is built with <span class="math notranslate nohighlight">\(B = (M + \gamma K)^{-1}M = (I + \gamma A)^{-1}\)</span>; the small matrix <span class="math notranslate nohighlight">\(\tilde T_m\)</span> approximates <span class="math notranslate nohighlight">\(B\)</span> and we evaluate <span class="math notranslate nohighlight">\(g(\tilde T_m)\)</span> with <span class="math notranslate nohighlight">\(g(\theta) = e^{-\Delta t(1/\theta - 1)/\gamma}\)</span>. Van den Eshof and Hochbruck (2006) show that the error is bounded by the best approximation error of <span class="math notranslate nohighlight">\(e^{-\Delta t\lambda}\)</span> by rational functions with the single pole <span class="math notranslate nohighlight">\(-1/\gamma\)</span> of multiplicity <span class="math notranslate nohighlight">\(m\)</span>, which is <strong>independent of <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></strong>, and give the following guidance for the shift: <span class="math notranslate nohighlight">\(\gamma \approx \Delta t/10\)</span> for tolerances around <span class="math notranslate nohighlight">\(10^{-6}\)</span>, smaller (<span class="math notranslate nohighlight">\(\Delta t/15\)</span> to <span class="math notranslate nohighlight">\(\Delta t/20\)</span>) for tighter ones; asymptotically <span class="math notranslate nohighlight">\(\gamma_{\rm opt} \approx \sqrt2\,\Delta t/m\)</span>. Too large a <span class="math notranslate nohighlight">\(\gamma\)</span> (e.g. <span class="math notranslate nohighlight">\(\gamma = \Delta t\)</span>) still converges but more slowly. In practice <span class="math notranslate nohighlight">\(\gamma\)</span> is fixed once, since changing it means a new factorisation.</p>
+<p>Van den Eshof–Hochbruck (2006): the error is bounded by the best rational approximation of <span class="math notranslate nohighlight">\(e^{-\Delta t\lambda}\)</span> with a single <span class="math notranslate nohighlight">\(m\)</span>-fold pole, <strong>independent of <span class="math notranslate nohighlight">\(\lambda_{\max}\)</span></strong>. Guidance for the shift: <span class="math notranslate nohighlight">\(\gamma \approx \Delta t/10\)</span> for tolerances around <span class="math notranslate nohighlight">\(10^{-6}\)</span>, smaller for tighter ones; a large <span class="math notranslate nohighlight">\(\gamma\)</span> still converges, but slowly. Changing <span class="math notranslate nohighlight">\(\gamma\)</span> means a new factorisation.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span>
@@ -670,7 +648,7 @@ e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k =
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/4b4fd259b8d466b6dd1c113f855ea3301df32b85cd2e4910d9b1ca2be6c3b9c9.png" src="../_images/4b4fd259b8d466b6dd1c113f855ea3301df32b85cd2e4910d9b1ca2be6c3b9c9.png" />
+<img alt="../_images/ef5496449ffcca6e9db152ce03e872b088695b2de0838349f9b386375ce36733.png" src="../_images/ef5496449ffcca6e9db152ce03e872b088695b2de0838349f9b386375ce36733.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -698,7 +676,7 @@ e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k =
 </div>
 <section id="inexact-inner-solves">
 <h3>Inexact inner solves<a class="headerlink" href="#inexact-inner-solves" title="Link to this heading">#</a></h3>
-<p>The solves with <span class="math notranslate nohighlight">\(M + \gamma K\)</span> need not be exact: replacing the factorisation by a preconditioned CG iteration with a moderate tolerance still gives a useful approximation (the accuracy is limited by the inner tolerance), which matters in 3D where factorisations are expensive. Here with a Jacobi preconditioner (the right-hand side must be projected onto the free dofs, since CG does not know about the Dirichlet rows). Note that with a loose inner tolerance the outer stopping criterion never triggers — the iterates keep changing at the level of the inner error — so <code class="docutils literal notranslate"><span class="pre">maxm</span></code> becomes the effective stop:</p>
+<p>The factorisation can be replaced by preconditioned CG (here with Jacobi). The accuracy is then limited by the inner tolerance, and <code class="docutils literal notranslate"><span class="pre">maxm</span></code> becomes the effective stop. The right-hand side must be projected onto the free dofs.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">freedofs</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"M"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"freedofs"</span><span class="p">],</span> <span class="n">coarse</span><span class="p">[</span><span class="s2">"u0"</span><span class="p">]</span>
@@ -722,10 +700,10 @@ e^{-\Delta t\lambda} = e^{-a} e^{-a s} = \sum_{k \ge 0} c_k T_k(s), \qquad c_k =
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>inner CG tol 1e-03:  Krylov dim 40,  rel. error 1.6e-03
-inner CG tol 1e-06:  Krylov dim 40,  rel. error 1.7e-06
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>inner CG tol 1e-09:  Krylov dim 24,  rel. error 1.2e-09
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>inner CG tol 1e-06:  Krylov dim 40,  rel. error 1.7e-06
+inner CG tol 1e-09:  Krylov dim 24,  rel. error 1.2e-09
 inner CG tol 1e-12:  Krylov dim 24,  rel. error 8.5e-11
 </pre></div>
 </div>
@@ -733,21 +711,15 @@ inner CG tol 1e-12:  Krylov dim 24,  rel. error 8.5e-11
 </div>
 </section>
 </section>
-<section id="contour-integrals-rational-approximation-with-complex-shifts">
-<h2>5. Contour integrals (rational approximation with complex shifts)<a class="headerlink" href="#contour-integrals-rational-approximation-with-complex-shifts" title="Link to this heading">#</a></h2>
-<p>Cauchy’s integral formula for <span class="math notranslate nohighlight">\(f(-\Delta t A)\)</span> with a contour <span class="math notranslate nohighlight">\(\Gamma\)</span> enclosing the (negative) spectrum of <span class="math notranslate nohighlight">\(-A\)</span>, i.e. the interval <span class="math notranslate nohighlight">\([-\lambda_{\max}, -\lambda_{\min}]\)</span>:</p>
+<section id="contour-integrals">
+<h2>5. Contour integrals<a class="headerlink" href="#contour-integrals" title="Link to this heading">#</a></h2>
+<p>Cauchy’s formula with a contour <span class="math notranslate nohighlight">\(\Gamma\)</span> around the negative spectrum of <span class="math notranslate nohighlight">\(-A\)</span>:</p>
 <div class="math notranslate nohighlight">
 \[
-e^{-\Delta t A}v = \frac{1}{2\pi i}\oint_\Gamma e^{\Delta t z}\,(zI + A)^{-1} v\, dz
-                 = \frac{1}{2\pi i}\oint_\Gamma e^{\Delta t z}\,(zM + K)^{-1} M v\, dz .
+e^{-\Delta t A}v = \frac{1}{2\pi i}\oint_\Gamma e^{\Delta t z}\,(zM + K)^{-1} M v\, dz .
 \]</div>
-<p>Since <span class="math notranslate nohighlight">\(e^{\Delta t z}\)</span> decays for <span class="math notranslate nohighlight">\(\mathrm{Re}\,z \to -\infty\)</span>, <span class="math notranslate nohighlight">\(\Gamma\)</span> can be an open curve around the negative real axis, and the trapezoidal rule on such a curve converges geometrically. Weideman and Trefethen (2007) optimised the parabola</p>
-<div class="math notranslate nohighlight">
-\[
-z(\theta) = \frac{N}{\Delta t}\big(0.1309 - 0.1194\,\theta^2 + 0.25\, i\theta\big), \quad \theta \in (-\pi, \pi),
-\]</div>
-<p>with <span class="math notranslate nohighlight">\(N\)</span> midpoint-rule nodes to an error of <span class="math notranslate nohighlight">\(O(2.85^{-N})\)</span>; by conjugate symmetry only the <span class="math notranslate nohighlight">\(N/2\)</span> nodes with <span class="math notranslate nohighlight">\(\theta &gt; 0\)</span> are needed for real data. The result is a <em>rational</em> approximation <span class="math notranslate nohighlight">\(\sum_k w_k (z_kM + K)^{-1}M\)</span> with <span class="math notranslate nohighlight">\(N/2\)</span> complex poles, uniformly accurate for all <span class="math notranslate nohighlight">\(v\)</span>, requiring <span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations (once) and <span class="math notranslate nohighlight">\(N/2\)</span> back-substitutions per application — all independent of each other, hence trivially parallel, and with no inner products or adaptivity. NGSolve needs the matrices on a complex <code class="docutils literal notranslate"><span class="pre">FESpace</span></code> to form <span class="math notranslate nohighlight">\(z_kM + K\)</span>.</p>
-<p>The class <code class="docutils literal notranslate"><span class="pre">ContourExp</span></code> does this; its <code class="docutils literal notranslate"><span class="pre">Phi(k,</span> <span class="pre">x)</span></code> uses the recursion <span class="math notranslate nohighlight">\(\varphi_k(-\Delta tA) = -(\Delta t A)^{-1}\big(\varphi_{k-1}(-\Delta tA) - I/(k-1)!\big)\)</span> with one extra factorisation of <span class="math notranslate nohighlight">\(K\)</span>, because <span class="math notranslate nohighlight">\(\varphi_k(\Delta t z)\)</span> decays only like <span class="math notranslate nohighlight">\(1/z\)</span> along the contour and the trapezoidal rule would lose its geometric convergence.</p>
+<p>On the parabola <span class="math notranslate nohighlight">\(z(\theta) = \frac{N}{\Delta t}(0.1309 - 0.1194\,\theta^2 + 0.25\,i\theta)\)</span>, <span class="math notranslate nohighlight">\(\theta \in (-\pi,\pi)\)</span>, the <span class="math notranslate nohighlight">\(N\)</span>-point midpoint rule converges like <span class="math notranslate nohighlight">\(2.85^{-N}\)</span> (Weideman–Trefethen 2007), and conjugate symmetry halves the work. The result is a rational approximation with <span class="math notranslate nohighlight">\(N/2\)</span> complex poles: <span class="math notranslate nohighlight">\(N/2\)</span> complex factorisations once, <span class="math notranslate nohighlight">\(N/2\)</span> back-substitutions per application, no inner products, trivially parallel. NGSolve needs the matrices on a <code class="docutils literal notranslate"><span class="pre">complex=True</span></code> space.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ContourExp.Phi</span></code> uses the recursion <span class="math notranslate nohighlight">\(\varphi_k(-\Delta tA) = -(\Delta tA)^{-1}\big(\varphi_{k-1}(-\Delta tA) - I/(k-1)!\big)\)</span>, because <span class="math notranslate nohighlight">\(\varphi_k(\Delta t z)\)</span> decays only like <span class="math notranslate nohighlight">\(1/z\)</span> along the contour.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Ns</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">32</span><span class="p">]</span>
@@ -769,22 +741,17 @@ z(\theta) = \frac{N}{\Delta t}\big(0.1309 - 0.1194\,\theta^2 + 0.25\, i\theta\bi
 </div>
 <div class="cell_output docutils container">
 <img alt="../_images/e73d0c8c112a43f2a4cd92a41e21f56039a74d9b22a7467accfec37c10e01871.png" src="../_images/e73d0c8c112a43f2a4cd92a41e21f56039a74d9b22a7467accfec37c10e01871.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>phi_1 via contour (N=24):  rel. error 3.7e-12
-phi_2 via contour (N=24):  rel. error 1.8e-11
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>phi_1 via contour (N=24):  rel. error 3.6e-12
+phi_2 via contour (N=24):  rel. error 1.7e-11
 </pre></div>
 </div>
 </div>
 </div>
-<p>The same idea with the <em>best</em> rational approximation of <span class="math notranslate nohighlight">\(e^{z}\)</span> on <span class="math notranslate nohighlight">\((-\infty, 0]\)</span> (Carathéodory–Fejér, <code class="docutils literal notranslate"><span class="pre">cf</span></code> in Trefethen–Weideman–Schmelzer 2006) needs even fewer poles: the type <span class="math notranslate nohighlight">\((n,n)\)</span> error is <span class="math notranslate nohighlight">\(\approx 2\cdot 9.289^{-n}\)</span>, i.e. <span class="math notranslate nohighlight">\(10^{-12}\)</span> with <span class="math notranslate nohighlight">\(n = 12\)</span>, <span class="math notranslate nohighlight">\(10^{-14}\)</span> with <span class="math notranslate nohighlight">\(n = 14\)</span>. The <code class="docutils literal notranslate"><span class="pre">AAA</span></code> algorithm (<code class="docutils literal notranslate"><span class="pre">scipy.interpolate.AAA</span></code>) can produce such approximants for arbitrary functions, including the <span class="math notranslate nohighlight">\(\varphi_k\)</span>.</p>
+<p>Best rational approximations (Carathéodory–Fejér, Trefethen–Weideman–Schmelzer 2006) need even fewer poles — <span class="math notranslate nohighlight">\(10^{-14}\)</span> with <span class="math notranslate nohighlight">\(n = 14\)</span> — and <code class="docutils literal notranslate"><span class="pre">scipy.interpolate.AAA</span></code> produces such approximants for any function.</p>
 </section>
-<section id="the-augmented-matrix-trick-for-varphi-functions">
-<h2>6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions<a class="headerlink" href="#the-augmented-matrix-trick-for-varphi-functions" title="Link to this heading">#</a></h2>
-<p>For a matrix <span class="math notranslate nohighlight">\(T\)</span> and vector <span class="math notranslate nohighlight">\(b\)</span> (Saad 1992, Sidje 1998, Al-Mohy–Higham 2011)</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}
-\exp\begin{pmatrix} T &amp; b \\ 0 &amp; 0\end{pmatrix} = \begin{pmatrix} e^{T} &amp; \varphi_1(T)\, b \\ 0 &amp; 1\end{pmatrix},
-\end{split}\]</div>
-<p>so one exponential of a matrix of dimension <span class="math notranslate nohighlight">\(m+1\)</span> gives <span class="math notranslate nohighlight">\(\varphi_1(T)b\)</span>, and more generally a <span class="math notranslate nohighlight">\((m+p)\)</span>-dimensional exponential gives <span class="math notranslate nohighlight">\(\sum_{k\le p}\varphi_k(T)b_k\)</span>. Software like <code class="docutils literal notranslate"><span class="pre">expokit</span></code>, <code class="docutils literal notranslate"><span class="pre">phipm</span></code> or <code class="docutils literal notranslate"><span class="pre">KIOPS</span></code> applies this to the <em>large</em> operator <span class="math notranslate nohighlight">\(A\)</span> (the augmented matrix is non-symmetric, so Arnoldi is used). In our setting it is only needed for the small projected matrix, where we evaluate <span class="math notranslate nohighlight">\(\varphi_k(T_m)e_1\)</span> directly through the eigendecomposition — here is the check that both agree:</p>
+<section id="the-augmented-matrix-trick">
+<h2>6. The augmented matrix trick<a class="headerlink" href="#the-augmented-matrix-trick" title="Link to this heading">#</a></h2>
+<p><span class="math notranslate nohighlight">\(\exp\begin{pmatrix} T &amp; b \\ 0 &amp; 0\end{pmatrix} = \begin{pmatrix} e^{T} &amp; \varphi_1(T)\, b \\ 0 &amp; 1\end{pmatrix}\)</span> (Sidje 1998, Al-Mohy–Higham 2011). <code class="docutils literal notranslate"><span class="pre">expokit</span></code>, <code class="docutils literal notranslate"><span class="pre">phipm</span></code> and <code class="docutils literal notranslate"><span class="pre">KIOPS</span></code> apply it to the large operator; we only need it for the small projected matrix, where the eigendecomposition gives the same result:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Tm</span> <span class="o">=</span> <span class="n">T</span><span class="p">[:</span><span class="mi">20</span><span class="p">,</span> <span class="p">:</span><span class="mi">20</span><span class="p">]</span>                                            <span class="c1"># from the Lanczos run above</span>
@@ -796,7 +763,7 @@ phi_2 via contour (N=24):  rel. error 1.8e-11
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>max difference between augmented-matrix and eigendecomposition phi_1(-dt T_m) e_1: 3.1e-16
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>max difference between augmented-matrix and eigendecomposition phi_1(-dt T_m) e_1: 5.4e-16
 </pre></div>
 </div>
 </div>
@@ -804,7 +771,7 @@ phi_2 via contour (N=24):  rel. error 1.8e-11
 </section>
 <section id="comparison-on-the-fine-mesh">
 <h2>7. Comparison on the fine mesh<a class="headerlink" href="#comparison-on-the-fine-mesh" title="Link to this heading">#</a></h2>
-<p>Time per application of <span class="math notranslate nohighlight">\(e^{-\Delta t A}\)</span> for <span class="math notranslate nohighlight">\(\Delta t = 0.01\)</span> at a tolerance of about <span class="math notranslate nohighlight">\(10^{-8}\)</span>. The reference is shift-and-invert Lanczos with tolerance <span class="math notranslate nohighlight">\(10^{-13}\)</span>, cross-checked against the contour integral with <span class="math notranslate nohighlight">\(N = 32\)</span>. Setup costs (factorisations) are listed separately: they are paid once per run if <span class="math notranslate nohighlight">\(\Delta t\)</span> (hence <span class="math notranslate nohighlight">\(\gamma\)</span> and the poles) is fixed.</p>
+<p>Time per application of <span class="math notranslate nohighlight">\(e^{-\Delta tA}\)</span> at a tolerance of about <span class="math notranslate nohighlight">\(10^{-8}\)</span>. Setup costs (factorisations) are paid once per run.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">;</span> <span class="n">P</span> <span class="o">=</span> <span class="n">fine</span>
@@ -830,27 +797,27 @@ phi_2 via contour (N=24):  rel. error 1.8e-11
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>reference: SI Lanczos m = 33, 0.05 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>reference: SI Lanczos m = 33, 0.06 s
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>cross-check: contour N=32, 0.35 s,  rel. difference 7.9e-14
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>cross-check: contour N=32, 0.43 s,  rel. difference 8.0e-14
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>polynomial Lanczos (tol 1e-8)    setup   0.010 s   apply   0.599 s   rel. error 7.6e-08
-shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 9.2e-09
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>polynomial Lanczos (tol 1e-8)    setup   0.016 s   apply   0.694 s   rel. error 7.6e-08
+shift-and-invert Lanczos (1e-8)  setup   0.013 s   apply   0.025 s   rel. error 9.2e-09
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Chebyshev (degree 1386)          setup   0.000 s   apply   0.813 s   rel. error 7.9e-14
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Chebyshev (degree 1386)          setup   0.000 s   apply   0.967 s   rel. error 7.9e-14
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>contour N=24 (12 complex solves) setup   0.224 s   apply   0.047 s   rel. error 2.5e-11
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>contour N=24 (12 complex solves) setup   0.267 s   apply   0.057 s   rel. error 2.5e-11
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/mw/0_yqnltn6rbg1msz5s15_vgc0000gn/T/ipykernel_87246/2399729199.py:13: UserWarning: Trace of LinearOperator not available, it will be estimated. Provide `traceA` to ensure performance.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/mw/0_yqnltn6rbg1msz5s15_vgc0000gn/T/ipykernel_93239/2399729199.py:13: UserWarning: Trace of LinearOperator not available, it will be estimated. Provide `traceA` to ensure performance.
   res.FV().NumPy()[:] = spla.expm_multiply(-dt*Aop, P["u0"].FV().NumPy(), traceA=-dt*float(np.sum(ref.lam)) if P is coarse else None)
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply (Taylor)           setup   0.000 s   apply   4.387 s   rel. error 9.0e-14
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>expm_multiply (Taylor)           setup   0.000 s   apply   5.434 s   rel. error 7.9e-14
 </pre></div>
 </div>
 </div>
@@ -865,19 +832,18 @@ shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/ba638a488aee55f6145e14fc110e2ae987a454b8ba5502e367cc06b4f5b7778f.png" src="../_images/ba638a488aee55f6145e14fc110e2ae987a454b8ba5502e367cc06b4f5b7778f.png" />
+<img alt="../_images/262eff3037da713556495034f55ee4c4bf73e8e30ef1a61f2179cda9a8ccb12f.png" src="../_images/262eff3037da713556495034f55ee4c4bf73e8e30ef1a61f2179cda9a8ccb12f.png" />
 </div>
 </div>
 </section>
 <section id="summary">
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Polynomial methods</strong> (Lanczos, Taylor/<code class="docutils literal notranslate"><span class="pre">expm_multiply</span></code>, Chebyshev) need only products with <span class="math notranslate nohighlight">\(A\)</span> — each a mass matrix solve here — but their cost grows with <span class="math notranslate nohighlight">\(\Delta t\lambda_{\max} \sim \Delta t/h^2\)</span>: <span class="math notranslate nohighlight">\(\sqrt{\rho}\)</span> iterations for Lanczos, <span class="math notranslate nohighlight">\(\rho\)</span> for the other two. They are the methods of choice when no factorisation is affordable (very large 3D problems, GPUs) and <span class="math notranslate nohighlight">\(\Delta t\)</span> is small.</p></li>
-<li><p><strong>Shift-and-invert Lanczos</strong> costs one factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span> (the implicit Euler matrix) and 10–30 back-substitutions per step, independent of <span class="math notranslate nohighlight">\(h\)</span> and <span class="math notranslate nohighlight">\(\Delta t\)</span>; with an inner iterative solver it also works matrix-free.</p></li>
-<li><p><strong>Contour integrals / rational approximations</strong> cost <span class="math notranslate nohighlight">\(N/2 \approx 12\)</span> complex factorisations and as many back-substitutions per step, with no inner products and perfect parallelism; the same poles serve all <span class="math notranslate nohighlight">\(\varphi_k\)</span> (with the recursion via <span class="math notranslate nohighlight">\(K^{-1}\)</span>).</p></li>
-<li><p>All methods evaluate <span class="math notranslate nohighlight">\(\varphi\)</span>-functions through the same machinery; use the eigendecomposition (or the augmented matrix) of the small projected matrix, never <span class="math notranslate nohighlight">\((e^z - 1)/z\)</span> in floating point for small <span class="math notranslate nohighlight">\(z\)</span>.</p></li>
+<li><p><strong>Polynomial methods</strong> (Lanczos, Taylor, Chebyshev) need only products with <span class="math notranslate nohighlight">\(A\)</span>, but their cost grows with <span class="math notranslate nohighlight">\(\rho = \Delta t\lambda_{\max}\)</span>: <span class="math notranslate nohighlight">\(\sqrt\rho\)</span> for Lanczos, <span class="math notranslate nohighlight">\(\rho\)</span> for the others. Use them when no factorisation is affordable.</p></li>
+<li><p><strong>Shift-and-invert Lanczos</strong>: one factorisation of <span class="math notranslate nohighlight">\(M + \gamma K\)</span>, 10–30 back-substitutions per step, mesh-independent.</p></li>
+<li><p><strong>Contour integrals</strong>: about 12 complex factorisations, no inner products, perfectly parallel, same poles for all <span class="math notranslate nohighlight">\(\varphi_k\)</span>.</p></li>
 </ul>
-<p>Not covered here: restarted Krylov methods (Eiermann–Ernst 2006; Afanasjew et al. 2008) to bound the basis size, Leja interpolation (Caliari et al.), extended and general rational Krylov spaces (Güttel 2013), and adaptive substepping as in <code class="docutils literal notranslate"><span class="pre">expokit</span></code>/<code class="docutils literal notranslate"><span class="pre">phipm</span></code>/<code class="docutils literal notranslate"><span class="pre">KIOPS</span></code>.</p>
+<p>Not covered: restarted Krylov methods (Eiermann–Ernst 2006), Leja interpolation (Caliari et al.), rational Krylov with several poles (Güttel 2013), adaptive substepping as in <code class="docutils literal notranslate"><span class="pre">expokit</span></code>, <code class="docutils literal notranslate"><span class="pre">phipm</span></code>, <code class="docutils literal notranslate"><span class="pre">KIOPS</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># tests</span>
@@ -897,22 +863,7 @@ shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 
 </div>
 </div>
 </div>
-<section id="references">
-<h3>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>A. H. Al-Mohy, N. J. Higham, <em>Computing the action of the matrix exponential, with an application to exponential integrators</em>, SIAM J. Sci. Comput. 33 (2011) 488–511. <a class="reference external" href="https://doi.org/10.1137/100788860">doi:10.1137/100788860</a></p></li>
-<li><p>L. Bergamaschi, M. Vianello, <em>Efficient computation of the exponential operator for large, sparse, symmetric matrices</em>, Numer. Linear Algebra Appl. 7 (2000) 27–45.</p></li>
-<li><p>V. Druskin, L. Knizhnerman, <em>Two polynomial methods of calculating functions of symmetric matrices</em>, USSR Comput. Math. Math. Phys. 29 (1989) 112–121.</p></li>
-<li><p>M. Eiermann, O. G. Ernst, <em>A restarted Krylov subspace method for the evaluation of matrix functions</em>, SIAM J. Numer. Anal. 44 (2006) 2481–2504. <a class="reference external" href="https://doi.org/10.1137/050633846">doi:10.1137/050633846</a></p></li>
-<li><p>J. van den Eshof, M. Hochbruck, <em>Preconditioning Lanczos approximations to the matrix exponential</em>, SIAM J. Sci. Comput. 27 (2006) 1438–1457. <a class="reference external" href="https://doi.org/10.1137/040605461">doi:10.1137/040605461</a></p></li>
-<li><p>S. Güttel, <em>Rational Krylov approximation of matrix functions: numerical methods and optimal pole selection</em>, GAMM-Mitt. 36 (2013) 8–31. <a class="reference external" href="https://doi.org/10.1002/gamm.201310002">doi:10.1002/gamm.201310002</a></p></li>
-<li><p>M. Hochbruck, C. Lubich, <em>On Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 34 (1997) 1911–1925. <a class="reference external" href="https://doi.org/10.1137/S0036142995280572">doi:10.1137/S0036142995280572</a></p></li>
-<li><p>Y. Saad, <em>Analysis of some Krylov subspace approximations to the matrix exponential operator</em>, SIAM J. Numer. Anal. 29 (1992) 209–228. <a class="reference external" href="https://doi.org/10.1137/0729014">doi:10.1137/0729014</a></p></li>
-<li><p>R. B. Sidje, <em>Expokit: a software package for computing matrix exponentials</em>, ACM Trans. Math. Softw. 24 (1998) 130–156. <a class="reference external" href="https://doi.org/10.1145/285861.285868">doi:10.1145/285861.285868</a></p></li>
-<li><p>L. N. Trefethen, J. A. C. Weideman, T. Schmelzer, <em>Talbot quadratures and rational approximations</em>, BIT 46 (2006) 653–670. <a class="reference external" href="https://doi.org/10.1007/s10543-006-0077-9">doi:10.1007/s10543-006-0077-9</a></p></li>
-<li><p>J. A. C. Weideman, L. N. Trefethen, <em>Parabolic and hyperbolic contours for computing the Bromwich integral</em>, Math. Comp. 76 (2007) 1341–1356. <a class="reference external" href="https://doi.org/10.1090/S0025-5718-07-01945-X">doi:10.1090/S0025-5718-07-01945-X</a></p></li>
-</ul>
-</section>
+<p><strong>References:</strong> A. H. Al-Mohy, N. J. Higham, SIAM J. Sci. Comput. 33 (2011); J. van den Eshof, M. Hochbruck, SIAM J. Sci. Comput. 27 (2006); M. Hochbruck, C. Lubich, SIAM J. Numer. Anal. 34 (1997); Y. Saad, SIAM J. Numer. Anal. 29 (1992); L. N. Trefethen, J. A. C. Weideman, T. Schmelzer, BIT 46 (2006); J. A. C. Weideman, L. N. Trefethen, Math. Comp. 76 (2007); S. Güttel, GAMM-Mitt. 36 (2013). Full list with DOIs in the README.</p>
 </section>
 </section>
 
@@ -982,7 +933,7 @@ shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-the-heat-equation-on-two-meshes">Setup: the heat equation on two meshes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#polynomial-lanczos">1. Polynomial Lanczos</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#error-estimation">Error estimation</a></li>
 </ul>
@@ -993,13 +944,10 @@ shift-and-invert Lanczos (1e-8)  setup   0.009 s   apply   0.019 s   rel. error 
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inexact-inner-solves">Inexact inner solves</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals-rational-approximation-with-complex-shifts">5. Contour integrals (rational approximation with complex shifts)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick-for-varphi-functions">6. The augmented matrix trick for <span class="math notranslate nohighlight">\(\varphi\)</span>-functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#contour-integrals">5. Contour integrals</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-augmented-matrix-trick">6. The augmented matrix trick</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#comparison-on-the-fine-mesh">7. Comparison on the fine mesh</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
 </ul>
   </nav></div>
 
