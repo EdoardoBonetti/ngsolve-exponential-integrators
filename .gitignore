@@ -4,3 +4,16 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 .claude/
+
+# Finder, Python and LaTeX build clutter
+*.pyc
+%OUTDIR%/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.run.xml
+*.toc
+*.synctex.gz
