@@ -1,6 +1,6 @@
 # Exponential integrators in NGSolve
 
-A four-part tutorial series on exponential integrators for time-dependent finite element
+A five-part tutorial series on exponential integrators for time-dependent finite element
 problems, written in the style of the NGSolve i-tutorials (section 3, time stepping).
 Everything is pure Python on top of the public NGSolve API — no changes to the C++ core.
 
@@ -10,6 +10,7 @@ Everything is pure Python on top of the public NGSolve API — no changes to the
 | 2 | [`02_matrix_exponential_methods/matrix_functions.ipynb`](02_matrix_exponential_methods/matrix_functions.ipynb) | How to compute `e^{-tA}v` for a large sparse FE operator: polynomial Lanczos (Hochbruck–Lubich bound, Saad estimate), `scipy.sparse.linalg.expm_multiply`, Chebyshev expansion, shift-and-invert Lanczos (choice of γ, inexact solves), **contour integrals** with complex shifts, augmented-matrix trick, timing comparison | ~20 s |
 | 3 | [`03_convection_diffusion_and_sources/convdiff_expRK.ipynb`](03_convection_diffusion_and_sources/convdiff_expRK.ipynb) | Non-symmetric operators (Arnoldi, Hessenberg matrix, field of values); time-dependent sources: exponential Euler and exponential trapezoidal rule (φ₂), order study | ~40 s |
 | 4 | [`04_nonlinear_allen_cahn/allen_cahn_exprb.ipynb`](04_nonlinear_allen_cahn/allen_cahn_exprb.ipynb) | Semilinear Allen–Cahn: exponential Euler, exponential Rosenbrock–Euler, IMEX Euler; energy decay, order study, large steps | ~15 s |
+| 5 | [`05_stokes_channel/stokes_channel.ipynb`](05_stokes_channel/stokes_channel.ipynb) | Incompressible flow through a constriction, H(div)-HDG in stream-function form (same velocity as BDM×P, SPD solves); pulse at Re 250 with `Draw`; measured comparison of fully implicit, IMEX and multirate stepping (figures) | ~35 s |
 
 Supporting files:
 

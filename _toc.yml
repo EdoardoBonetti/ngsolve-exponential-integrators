@@ -5,3 +5,4 @@ chapters:
   - file: 02_matrix_exponential_methods/matrix_functions
   - file: 03_convection_diffusion_and_sources/convdiff_expRK
   - file: 04_nonlinear_allen_cahn/allen_cahn_exprb
+  - file: 05_stokes_channel/stokes_channel

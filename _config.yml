@@ -2,7 +2,7 @@ title: Exponential integrators in NGSolve
 author: Edoardo Bonetti
 copyright: "2026"
 logo: ""
-exclude_patterns: [old/**, tests/**, _build/**, .github/**, "**/.ipynb_checkpoints"]
+exclude_patterns: [old/**, tests/**, _build/**, .github/**, .claude/**, "**/.ipynb_checkpoints"]
 only_build_toc_files: true
 
 # Notebooks are stored without outputs and executed when the book is built
